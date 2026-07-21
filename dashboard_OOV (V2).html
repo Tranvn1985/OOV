@@ -688,7 +688,7 @@ function loadData(){
   if(btn){btn.textContent='⏳ Loading...';btn.disabled=true;}
   var ts=new Date().getTime();
   var _urls=[
-    'https://docs.google.com/spreadsheets/d/1fGEVwnBEPaIYYGY6NXnUT3pXGvnswpdWf4RUWXkO0wM/pub?gid=807268203&single=true&output=csv&t='+ts,
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv&t='+ts,
     'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/pub?gid='+GID+'&single=true&output=csv&t='+ts,
     'https://api.allorigins.win/raw?url='+encodeURIComponent('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid='+GID),
     'https://corsproxy.io/?'+encodeURIComponent('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid='+GID+'&t='+ts)
@@ -844,7 +844,7 @@ function renderCurrentPage(){
   if(currentPage==='overview') renderOverview(getFilteredOvData());
   else if(currentPage==='monthly') applyMonthlyFilter();
   else if(currentPage==='supplier-info') renderSupplierInfo();
-  else if(currentPage==='confirmation'){initConfirmation();renderConfirmation();}
+  else if(currentPage==='confirmation'){initConfirmation();}
   else if(currentPage==='aging') renderAging();
   else if(currentPage==='detail') applyDetailFilters();
 }
@@ -1298,22 +1298,24 @@ function applyDetailFilters(){
 
 function initConfirmation(){
   var sel=document.getElementById('confNoSelect');if(!sel)return;
-  var prevVal=sel.value; // preserve current selection
-  var opts=allData.map(function(d,i){
-    var statusLabel=d.status?(' ['+d.status+']'):'';
-    var label=(i+1)+'. '+d.supplier+' \u2014 '+d.inv+(d.dueDate?' (Due: '+d.dueDate+')':'')+statusLabel;
+  var src=allData.length>0?allData:STATIC_DATA;
+  var prevVal=sel.value;
+  var opts=src.map(function(d,i){
+    var s=d.status||'';
+    var inv=d.inv||'—';
+    var label=(i+1)+'. '+d.supplier+' — '+inv+(d.dueDate?' ('+d.dueDate+')':'')+(s?' ['+s+']':'');
     return '<option value="'+i+'">'+label+'</option>';
   });
-  sel.innerHTML='<option value="">-- Select invoice --</option>'+opts.join('');
-  // Restore previous selection if still valid
-  if(prevVal!==''&&parseInt(prevVal)<allData.length){
+  sel.innerHTML='<option value="">-- Select invoice No. --</option>'+opts.join('');
+  if(prevVal!==''&&parseInt(prevVal)<src.length){
     sel.value=prevVal;
-    renderConfirmation(); // auto re-render with updated data
+    renderConfirmation();
   }
 }
 
 function renderConfirmation(){
   var sel=document.getElementById('confNoSelect');
+  var src=allData.length>0?allData:STATIC_DATA;
   var idx=sel?parseInt(sel.value):-1;
   var preview=document.getElementById('confPreview');
   var empty=document.getElementById('confEmpty');
@@ -1322,7 +1324,7 @@ function renderConfirmation(){
     if(empty)empty.style.display='block';
     return;
   }
-  var d=allData[idx];
+  var d=src[idx];
   if(!d){return;}
 
   // Find supplier info for bank details
@@ -1347,8 +1349,20 @@ function renderConfirmation(){
 (function(){
   var INTERVAL = 5 * 60 * 1000;
   var nextAt = Date.now() + INTERVAL;
+  var timer = null;
 
-  // Countdown ticker
+  function scheduleNext(){
+    if(timer) clearTimeout(timer);
+    nextAt = Date.now() + INTERVAL;
+    timer = setTimeout(function(){
+      var b=document.getElementById('autoBadge');
+      if(b) b.classList.add('syncing');
+      loadData();
+      scheduleNext();
+    }, INTERVAL);
+  }
+
+  // Countdown display
   setInterval(function(){
     var left = Math.max(0, nextAt - Date.now());
     var m = Math.floor(left / 60000);
@@ -1357,25 +1371,20 @@ function renderConfirmation(){
     if(el) el.textContent = 'Auto ' + m + ':' + (s < 10 ? '0' : '') + s;
   }, 1000);
 
-  // Auto fetch
-  setInterval(function(){
-    nextAt = Date.now() + INTERVAL;
-    var b = document.getElementById('autoBadge');
-    if(b) b.classList.add('syncing');
-    loadData();
-  }, INTERVAL);
-
-  // Hook into onSuccess/useFallback via badge cleanup
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('refreshBtn');
-    if(btn){
-      var orig = btn.onclick;
-      btn.onclick = function(){
-        nextAt = Date.now() + INTERVAL;
-        if(orig) orig.call(this);
-      };
+  // Pause auto-refresh when tab not visible, resume when visible
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      if(timer){clearTimeout(timer);timer=null;}
+    } else {
+      // Resume: check if overdue, fetch immediately if so
+      if(Date.now() > nextAt){
+        loadData();
+      }
+      scheduleNext();
     }
   });
+
+  scheduleNext();
 })();
 
 // ===== INIT =====
