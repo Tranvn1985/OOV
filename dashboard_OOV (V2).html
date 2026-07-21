@@ -844,7 +844,17 @@ function renderCurrentPage(){
   if(currentPage==='overview') renderOverview(getFilteredOvData());
   else if(currentPage==='monthly') applyMonthlyFilter();
   else if(currentPage==='supplier-info') renderSupplierInfo();
-  else if(currentPage==='confirmation'){initConfirmation();}
+  else if(currentPage==='confirmation'){
+  // Always populate with latest data (or static fallback)
+  initConfirmation();
+  // If dropdown still empty after init, force it
+  var _sel=document.getElementById('confNoSelect');
+  if(_sel&&_sel.options.length<=1){
+    var _src=allData.length>0?allData:STATIC_DATA;
+    _sel.innerHTML='<option value="">-- Select invoice No. --</option>'+
+      _src.map(function(d,i){return '<option value="'+i+'">'+(i+1)+'. '+d.supplier+' — '+(d.inv||'—')+(d.dueDate?' ('+d.dueDate+')':'')+'</option>';}).join('');
+  }
+}
   else if(currentPage==='aging') renderAging();
   else if(currentPage==='detail') applyDetailFilters();
 }
