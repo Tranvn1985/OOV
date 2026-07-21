@@ -643,39 +643,61 @@ var STATIC_DATA = [
 // ===== LOAD DATA FROM GOOGLE SHEETS =====
 function loadData(){
   var btn=document.getElementById('refreshBtn');
-  if(btn){btn.textContent='⏳ Loading...';btn.disabled=true;}
-  var ts=new Date().getTime();
-  var _urls=[
-    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv&t='+ts,
-    'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/pub?gid='+GID+'&single=true&output=csv&t='+ts,
-    'https://api.allorigins.win/raw?url='+encodeURIComponent('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid='+GID),
-    'https://corsproxy.io/?'+encodeURIComponent('https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid='+GID+'&t='+ts)
-  ];
-  function onSuccess(data){
+  if(btn){btn.textContent='\u23F3 Loading...';btn.disabled=true;}
+  var badge=document.getElementById('autoBadge');
+  if(badge) badge.classList.add('syncing');
+
+  var pubUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
+  var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(pubUrl);
+
+  function onOK(data){
     allData=data;
     var now=new Date();
-    var syncStr=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-    document.getElementById('lastSync').textContent=syncStr;
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=syncStr;
-    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
+    var ts=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
+           String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent=ts;
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=ts;
+    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    if(badge)badge.classList.remove('syncing');
     renderCurrentPage();
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
-  function useFallback(reason){
-    console.warn('Using static data:',reason);
+
+  function onFail(){
     allData=STATIC_DATA;
-    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
-    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static \u00B7 Jul-2026';
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static \u00B7 Jul-2026';
+    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    if(badge)badge.classList.remove('syncing');
     renderCurrentPage();
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
-  (function tryU(i){
-    if(i>=_urls.length){useFallback('All URLs failed');return;}
-    var c=new AbortController(),t=setTimeout(function(){c.abort();},8000);
-    fetch(_urls[i],{signal:c.signal})
-      .then(function(r){clearTimeout(t);if(!r.ok)throw new Error(r.status);return r.text();})
-      .then(function(tx){if(tx.length<100)throw new Error('empty');onSuccess(parseSheetData(tx));})
-      .catch(function(){clearTimeout(t);tryU(i+1);});
-  })(0);
+
+  function tryPub(){
+    fetch(pubUrl)
+      .then(function(r){return r.text();})
+      .then(function(txt){
+        var d=parseSheetData(txt);
+        if(d&&d.length>5){onOK(d);}else{tryProxy();}
+      })
+      .catch(function(){tryProxy();});
+  }
+
+  function tryProxy(){
+    fetch(proxyUrl)
+      .then(function(r){return r.text();})
+      .then(function(txt){
+        var d=parseSheetData(txt);
+        if(d&&d.length>5){onOK(d);}else{onFail();}
+      })
+      .catch(function(){onFail();});
+  }
+
+  tryPub();
 }
 
 function parseSheetData(csvText){
