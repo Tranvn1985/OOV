@@ -114,6 +114,15 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px}
   cursor:pointer;outline:none;min-width:112px;transition:border-color .15s
 }
 .filter-select:focus,.filter-select:hover{border-color:var(--accent)}
+/* ===== AUTO-REFRESH ===== */
+.auto-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:20px;
+  font-size:11px;color:var(--muted);margin-left:8px;white-space:nowrap}
+.auto-dot{width:7px;height:7px;border-radius:50%;background:#2e8a5c;flex-shrink:0;
+  animation:adot 2s infinite}
+@keyframes adot{0%,100%{opacity:1}50%{opacity:.3}}
+.auto-badge.syncing .auto-dot{background:var(--accent)}
+
 /* MS */
 .ms-wrap{position:relative;display:inline-block;vertical-align:middle}
 .ms-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;min-width:110px;transition:border-color .15s;white-space:nowrap;user-select:none}
@@ -316,6 +325,7 @@ tbody td.center{text-align:center}
       <option value="Oct">October</option><option value="Nov">November</option><option value="Dec">December</option>
     </select>
     <button class="filter-refresh-btn" id="refreshBtn" onclick="loadData()">&#8634; Refresh data</button>
+    <div class="auto-badge" id="autoBadge"><span class="auto-dot"></span><span id="autoCountdown">Auto 5:00</span></div>
   </div>
   <div style="margin-bottom:8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted)">Key Indicators</div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px" id="execKpiGrid">
@@ -565,7 +575,7 @@ var SUPPLIER_INFO=[
   {no:15,payTo:"TRI-ATOM",name:"TriAtom Assurance Services Private Limited",account:"736305000690",bank:"ICICI BANK LTD Prashanth Nagar Branch",contact:"Ajay Tambe",email:"aj@atomaudits.com"},
   {no:16,payTo:"OMNI",name:"People Intelligence Singapore Pte. Ltd",account:"8853798181",bank:"DBS Bank Ltd",contact:"",email:"invoice@omnihr.co"},
   {no:17,payTo:"CHARLTON",name:"Charlton Media Group Pte Ltd",account:"4019011245",bank:"United Overseas Bank Limited",contact:"CMG Accounting",email:"accounting@charltonmediamail.com"},
-  {no:18,payTo:"LAVI",name:"Manh Vu Linh",account:"105709827 (VND)",bank:"Vietnam Prosperity Joint Stock Commercial Bank (VPB)",contact:"Linh Mạnh",email:"hello@lavidesign.studio"}
+  {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202607-2530",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 07.26",invDate:"01-Jul-26",dueDate:"07-Jul-26",amount:2000.0,paid:2000.0,pending:0.0,statusPmt:"Paid",pmtDate:"Jul-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Jul"}
 ];
 
 // ===== CONFIG =====
@@ -638,7 +648,7 @@ function parseCSV(text){
   return rows;
 }
 
-// ===== STATIC DATA (21-Jul-2026, 31 records) =====
+// ===== STATIC DATA (21-Jul-2026, 32 records) =====
 var STATIC_DATA = [
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of VN-Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"205-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN FEB (Inv: 205-26CA)",invDate:"05-Mar-26",dueDate:"17-Mar-26",amount:1294.79,paid:1294.79,pending:0.0,statusPmt:"Paid",pmtDate:"Mar-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Mar"},
   {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"754",desc:"PMT AWS SERVICE CHARGES - 01.26 (Inv: 754)",invDate:"12-Feb-26",dueDate:"11-Mar-26",amount:5942.79,paid:5942.79,pending:0.0,statusPmt:"Paid",pmtDate:"Mar-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Mar"},
@@ -691,6 +701,10 @@ function loadData(){
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=syncStr;
     if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     renderCurrentPage();
+    // Always refresh dynamic filters and confirmation after data loads
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
   function useFallback(reason){
     console.warn('Using static data:',reason);
@@ -698,7 +712,11 @@ function loadData(){
     var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
     if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
+    var _ab=document.getElementById('autoBadge');if(_ab)_ab.classList.remove('syncing');
     renderCurrentPage();
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
   (function tryU(i){
     if(i>=_urls.length){useFallback('failed');return;}
@@ -1280,12 +1298,18 @@ function applyDetailFilters(){
 
 function initConfirmation(){
   var sel=document.getElementById('confNoSelect');if(!sel)return;
-  // Build options from allData with No (row index)
+  var prevVal=sel.value; // preserve current selection
   var opts=allData.map(function(d,i){
-    var label=(i+1)+'. '+d.supplier+' — '+d.inv+(d.dueDate?' (Due: '+d.dueDate+')':'');
+    var statusLabel=d.status?(' ['+d.status+']'):'';
+    var label=(i+1)+'. '+d.supplier+' \u2014 '+d.inv+(d.dueDate?' (Due: '+d.dueDate+')':'')+statusLabel;
     return '<option value="'+i+'">'+label+'</option>';
   });
   sel.innerHTML='<option value="">-- Select invoice --</option>'+opts.join('');
+  // Restore previous selection if still valid
+  if(prevVal!==''&&parseInt(prevVal)<allData.length){
+    sel.value=prevVal;
+    renderConfirmation(); // auto re-render with updated data
+  }
 }
 
 function renderConfirmation(){
@@ -1317,6 +1341,42 @@ function renderConfirmation(){
   if(preview)preview.style.display='block';
   if(empty)empty.style.display='none';
 }
+
+
+// ===== AUTO-REFRESH (5 min) =====
+(function(){
+  var INTERVAL = 5 * 60 * 1000;
+  var nextAt = Date.now() + INTERVAL;
+
+  // Countdown ticker
+  setInterval(function(){
+    var left = Math.max(0, nextAt - Date.now());
+    var m = Math.floor(left / 60000);
+    var s = Math.floor((left % 60000) / 1000);
+    var el = document.getElementById('autoCountdown');
+    if(el) el.textContent = 'Auto ' + m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+
+  // Auto fetch
+  setInterval(function(){
+    nextAt = Date.now() + INTERVAL;
+    var b = document.getElementById('autoBadge');
+    if(b) b.classList.add('syncing');
+    loadData();
+  }, INTERVAL);
+
+  // Hook into onSuccess/useFallback via badge cleanup
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('refreshBtn');
+    if(btn){
+      var orig = btn.onclick;
+      btn.onclick = function(){
+        nextAt = Date.now() + INTERVAL;
+        if(orig) orig.call(this);
+      };
+    }
+  });
+})();
 
 // ===== INIT =====
 // ===== MULTI-SELECT ENGINE =====
