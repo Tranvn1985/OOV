@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OOV Payment Order – Payment Dashboard</title>
+<title>WISE Finance – Payment Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -114,6 +114,7 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px}
   cursor:pointer;outline:none;min-width:112px;transition:border-color .15s
 }
 .filter-select:focus,.filter-select:hover{border-color:var(--accent)}
+
 /* ===== AUTO-REFRESH ===== */
 .auto-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
   background:var(--surface2);border:1px solid var(--border);border-radius:20px;
@@ -121,29 +122,6 @@ nav{flex:1;padding:14px 10px;display:flex;flex-direction:column;gap:2px}
 .auto-dot{width:7px;height:7px;border-radius:50%;background:#2e8a5c;flex-shrink:0;
   animation:adot 2s infinite}
 @keyframes adot{0%,100%{opacity:1}50%{opacity:.3}}
-.auto-badge.syncing .auto-dot{background:var(--accent)}
-
-/* MS */
-.ms-wrap{position:relative;display:inline-block;vertical-align:middle}
-.ms-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;min-width:110px;transition:border-color .15s;white-space:nowrap;user-select:none}
-.ms-btn:hover,.ms-btn.msa{border-color:var(--accent);background:#eff2ff;color:var(--accent)}
-.ms-caret{font-size:8px;margin-left:auto;opacity:.4}
-.ms-cnt{background:var(--accent);color:#fff;border-radius:9px;font-size:10px;font-weight:700;padding:0 5px;min-width:16px;text-align:center;display:inline-block}
-.ms-panel{position:absolute;top:calc(100%+4px);left:0;z-index:9999;min-width:190px;max-width:270px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;overflow:hidden}
-.ms-panel.open{display:block}
-.ms-psrch{width:100%;box-sizing:border-box;padding:7px 10px;border:none;border-bottom:1px solid var(--border);font-family:'Inter',sans-serif;font-size:12px;outline:none;background:var(--surface2)}
-.ms-list{max-height:200px;overflow-y:auto}
-.ms-item{display:flex;align-items:center;gap:7px;padding:7px 11px;cursor:pointer;font-size:12px;transition:background .1s}
-.ms-item:hover{background:var(--accent-light)}
-.ms-item.mss{background:#eff2ff;font-weight:600;color:var(--accent)}
-.ms-item input[type=checkbox]{accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.ms-foot{display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--border);background:var(--surface2)}
-.ms-foot button{flex:1;padding:4px 0;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer}
-.ms-clr{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
-.ms-clr:hover{color:#7a2a3a;border-color:#7a2a3a}
-.ms-all{background:var(--accent);color:#fff;border:1px solid var(--accent)}
-.ms-all:hover{background:#3451d1}
-
 .filter-refresh-btn{
   margin-left:auto;padding:7px 18px;border-radius:var(--radius-sm);
   border:none;background:linear-gradient(135deg,#4361ee,#738ffa);
@@ -268,24 +246,14 @@ tbody td.center{text-align:center}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#c5ccff;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-
-@media print {
-  body > *:not(#page-confirmation),
-  .sidebar,.filter-bar,.nav-item,
-  #confEmpty, select, button {display:none!important}
-  #page-confirmation {display:block!important;padding:0!important}
-  #confPreview {display:block!important}
-  .table-card {box-shadow:none!important;border:none!important}
-}
-
 </style>
 </head>
 <body>
 
 <aside class="sidebar">
   <div class="logo">
-    <div class="logo-avatar">OOV</div>
-    <div class="logo-title">OOV Finance</div>
+    <div class="logo-avatar">WISE</div>
+    <div class="logo-title">WISE Finance</div>
     <div class="logo-sub">Payment Dashboard v3.0</div>
   </div>
   <nav>
@@ -294,7 +262,7 @@ tbody td.center{text-align:center}
     <div class="nav-item" onclick="showPage('supplier-info',this)"><span class="nav-icon">🏢</span> Supplier Info</div>
     <div class="nav-item" onclick="showPage('detail',this)"><span class="nav-icon">📋</span> Invoice List</div>
     <div class="nav-item" onclick="showPage('aging',this)"><span class="nav-icon">⏱️</span> Aging</div>
-    <div class="nav-item" onclick="showPage('confirmation',this)"><span class="nav-icon">📄</span> Confirmation</div>
+    <div class="nav-item" onclick="showPage('confirmation',this)"><span class="nav-icon">📋</span> Confirmation</div>
   </nav>
   <div class="sidebar-footer"><span class="update-dot"></span>Last sync: <span id="lastSync">—</span></div>
 </aside>
@@ -456,10 +424,20 @@ tbody td.center{text-align:center}
     </div>
   </div>
   <div class="filter-bar">
-    <div class="ms-wrap" id="mw-dp" data-label="PMT Date"></div>
-    <div class="ms-wrap" id="mw-ds" data-label="All Suppliers"></div>
-    <div class="ms-wrap" id="mw-dpr" data-label="All Priority"></div>
-    <div class="ms-wrap" id="mw-dst" data-label="All Status"></div>
+    <select class="filter-select" id="detail-pmtdate" onchange="applyDetailFilters()">
+      <option value="">All PMT Date</option>
+    </select>
+    <select class="filter-select" id="detail-supplier" onchange="applyDetailFilters()">
+      <option value="">All Suppliers</option>
+    </select>
+    <select class="filter-select" id="detail-priority" onchange="applyDetailFilters()">
+      <option value="">All Priority</option>
+      <option>🔴 Urgent</option><option>🟠 Planned</option><option>🟢 Consider</option><option>⚫ Blocked</option><option>✅ Done</option>
+    </select>
+    <select class="filter-select" id="detail-status" onchange="applyDetailFilters()">
+      <option value="">All Status</option>
+      <option>Overdue</option><option>Due Soon</option><option>Pending</option><option>Paid</option><option>Blocked</option>
+    </select>
     <button class="filter-refresh-btn" onclick="loadData()">&#8634; Refresh</button>
   </div>
   <div class="table-card">
@@ -471,7 +449,6 @@ tbody td.center{text-align:center}
     <tbody id="mainTableBody"></tbody></table>
   </div>
 </div>
-
 
 <!-- CONFIRMATION PAGE -->
 <div class="page" id="page-confirmation">
@@ -554,32 +531,12 @@ tbody td.center{text-align:center}
   </div>
 </div>
 
+
 </main>
 
 <script>
-var SUPPLIER_INFO=[
-  {no:1,payTo:"ICEIE",name:"International Centre For Edtech Impact",account:"NO54 3185 42 74395",bank:"SPAREBANK 1",contact:"Saila",email:"eduevidence1@eduevidence.org"},
-  {no:2,payTo:"ATOM AUDIT",name:"Atom Assurances Services",account:"736305000472",bank:"ICICI BANK LTD.",contact:"Varun Guptha",email:"varun@atomaudits.com"},
-  {no:3,payTo:"EQUIFIS",name:"Equifis Associates Pte. Ltd",account:"647327477001",bank:"OCBC Bank",contact:"Chow Hoe Keong",email:"chowhoekeong@equifis.com"},
-  {no:4,payTo:"NIKOLA",name:"Nikola Plavšić Pr Računarsko Programiranje",account:"RS35325960270010209517",bank:"OTP Bank Srbija",contact:"",email:""},
-  {no:5,payTo:"SPRINTO",name:"Sprinto Inc.",account:"3304464694",bank:"First Citizens Bank and Trust Co.",contact:"Ajay",email:"ajayt@sprinto.com"},
-  {no:6,payTo:"RENOVA",name:"Renova Cloud Hk Limited",account:"503380354301",bank:"OCBC Singapore",contact:"Dieu Nguyen",email:"dieu.nguyen@renovacloud.com"},
-  {no:7,payTo:"ACCLIME",name:"Acclime Singapore Pte Ltd",account:"0659015824 (a/c SGD)",bank:"DBS BANK LTD",contact:"Sibing Tan",email:"s.tan@acclime.com"},
-  {no:8,payTo:"KEYTECHX",name:"Keytechx Pte. Ltd",account:"8853798635",bank:"DBS Bank Ltd.",contact:"Thuong Dao",email:"thuong@keytechx.com"},
-  {no:9,payTo:"CLOUD ACE",name:"Cloud Ace Co., Ltd.",account:"1602201366493",bank:"Agribank of Vietnam Branch 3",contact:"Trần Khả Tú",email:"tutran@cloud-ace.com"},
-  {no:10,payTo:"Arc Warden",name:"Arc Warden Limited",account:"47411853926",bank:"Standard Chartered Bank (Hong Kong) Limited",contact:"Nguyet Le",email:"nguyetle@genialaw.com"},
-  {no:11,payTo:"OOOE",name:"One On One English Company Limited",account:"1903 3536 051 011",bank:"Techcombank Sai Gon Branch",contact:"",email:""},
-  {no:12,payTo:"WYKEHAM",name:"Wykeham Corporate Services Ltd",account:"503472177301",bank:"OCBC Bank",contact:"Nguyet Le",email:"Nguyet.Le@acsvlegal.com"},
-  {no:13,payTo:"LVD",name:"Lvd Services Pte Ltd",account:"1049016277",bank:"DBS BANK LTD",contact:"Chiewha Ngui",email:"chiewha.ngui@lvdglobal.com.sg"},
-  {no:14,payTo:"HUBSPOT",name:"HubSpot Asia Pte Ltd",account:"71026029",bank:"Bank of America, N.A., Singapore",contact:"HubSpot Billing",email:"billing@hubspot.com"},
-  {no:15,payTo:"TRI-ATOM",name:"TriAtom Assurance Services Private Limited",account:"736305000690",bank:"ICICI BANK LTD Prashanth Nagar Branch",contact:"Ajay Tambe",email:"aj@atomaudits.com"},
-  {no:16,payTo:"OMNI",name:"People Intelligence Singapore Pte. Ltd",account:"8853798181",bank:"DBS Bank Ltd",contact:"",email:"invoice@omnihr.co"},
-  {no:17,payTo:"CHARLTON",name:"Charlton Media Group Pte Ltd",account:"4019011245",bank:"United Overseas Bank Limited",contact:"CMG Accounting",email:"accounting@charltonmediamail.com"},
-  {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202607-2530",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 07.26",invDate:"01-Jul-26",dueDate:"07-Jul-26",amount:2000.0,paid:2000.0,pending:0.0,statusPmt:"Paid",pmtDate:"Jul-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Jul"}
-];
-
 // ===== CONFIG =====
-var SHEET_ID = '1fGEVwnBEPaIYYGY6NXnUT3pXGvnswpdWf4RUWXkO0wM';
+var SHEET_ID = '1Kr9YgkSBPgU3BfZQLxRA_9WFs0wARsktQVdLhlZpUc0';
 var GID = '807268203';
 var CSV_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=' + GID;
 
@@ -680,7 +637,8 @@ var STATIC_DATA = [
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of Vietnam Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"835-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN JUN",invDate:"05-Jul-26",dueDate:"15-Jul-26",amount:348.02,paid:348.02,pending:0.0,statusPmt:"Paid",pmtDate:"Jul-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Jul"},
   {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263301",desc:"PMT FOR ACCOUNTANCY, CONSOLIDATED FS FOR YE2025",invDate:"03-Jul-26",dueDate:"31-Jul-26",amount:3892.86,paid:0.0,pending:1946.43,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"10",priority:"🟠 Planned",note:"Amount of Inv: 4,905 SGD, 2 installments (pmt 1st in Jul: 2,452.5 SGD, pmt 2nd in Aug: 2,452.5 SGD)",monthDebt:"Jul"},
   {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202607-2530",desc:"PMT EMPLOYEE MANAGEMENT SYSTEM - 07.26",invDate:"01-Jul-26",dueDate:"07-Jul-26",amount:164.37,paid:164.37,pending:0.0,statusPmt:"Paid",pmtDate:"Jun-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Jun"},
-  {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263530",desc:"PMT FOR PREPARE AGM, FILE ANNUAL RETURN YE2025",invDate:"17-Jul-26",dueDate:"31-Jul-26",amount:428.25,paid:0.0,pending:428.25,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"10",priority:"🟠 Planned",note:"Amount of Inv: 539.6 SGD",monthDebt:"Aug"}
+  {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263530",desc:"PMT FOR PREPARE AGM, FILE ANNUAL RETURN YE2025",invDate:"17-Jul-26",dueDate:"31-Jul-26",amount:428.25,paid:0.0,pending:428.25,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"10",priority:"🟠 Planned",note:"Amount of Inv: 539.6 SGD",monthDebt:"Aug"},
+  {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202607-2530",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 07.26",invDate:"01-Jul-26",dueDate:"07-Jul-26",amount:2000.0,paid:2000.0,pending:0.0,statusPmt:"Paid",pmtDate:"Jul-2026",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Jul"}
 ];
 // ===== LOAD DATA FROM GOOGLE SHEETS =====
 function loadData(){
@@ -701,10 +659,6 @@ function loadData(){
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=syncStr;
     if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     renderCurrentPage();
-    // Always refresh dynamic filters and confirmation after data loads
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
   }
   function useFallback(reason){
     console.warn('Using static data:',reason);
@@ -712,16 +666,15 @@ function loadData(){
     var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
     if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
-    var _ab=document.getElementById('autoBadge');if(_ab)_ab.classList.remove('syncing');
     renderCurrentPage();
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
   }
   (function tryU(i){
-    if(i>=_urls.length){useFallback('failed');return;}
+    if(i>=_urls.length){useFallback('All URLs failed');return;}
     var c=new AbortController(),t=setTimeout(function(){c.abort();},8000);
-    fetch(_urls[i],{signal:c.signal}).then(function(r){clearTimeout(t);if(!r.ok)throw new Error(r.status);return r.text();}).then(function(tx){if(tx.length<100)throw new Error('empty');onSuccess(parseSheetData(tx));}).catch(function(){clearTimeout(t);tryU(i+1);});
+    fetch(_urls[i],{signal:c.signal})
+      .then(function(r){clearTimeout(t);if(!r.ok)throw new Error(r.status);return r.text();})
+      .then(function(tx){if(tx.length<100)throw new Error('empty');onSuccess(parseSheetData(tx));})
+      .catch(function(){clearTimeout(t);tryU(i+1);});
   })(0);
 }
 
@@ -844,17 +797,6 @@ function renderCurrentPage(){
   if(currentPage==='overview') renderOverview(getFilteredOvData());
   else if(currentPage==='monthly') applyMonthlyFilter();
   else if(currentPage==='supplier-info') renderSupplierInfo();
-  else if(currentPage==='confirmation'){
-  // Always populate with latest data (or static fallback)
-  initConfirmation();
-  // If dropdown still empty after init, force it
-  var _sel=document.getElementById('confNoSelect');
-  if(_sel&&_sel.options.length<=1){
-    var _src=allData.length>0?allData:STATIC_DATA;
-    _sel.innerHTML='<option value="">-- Select invoice No. --</option>'+
-      _src.map(function(d,i){return '<option value="'+i+'">'+(i+1)+'. '+d.supplier+' — '+(d.inv||'—')+(d.dueDate?' ('+d.dueDate+')':'')+'</option>';}).join('');
-  }
-}
   else if(currentPage==='aging') renderAging();
   else if(currentPage==='detail') applyDetailFilters();
 }
@@ -1124,47 +1066,65 @@ function applyMonthlyFilter(){
 
 // ===== SUPPLIER INFO =====
 function renderSupplierInfo(){
-  var dd=document.getElementById('supplierDropdown');
-  var prev=dd?dd.value:'';
-  if(dd){
-    dd.innerHTML='<option value="">All Suppliers</option>'+SUPPLIER_INFO.map(function(s){
-      return '<option value="'+s.no+'">'+s.no+'. '+s.payTo+' — '+s.name+'</option>';
-    }).join('');
-    if(prev) dd.value=prev;
-  }
-  function renderRows(list){
-    var body=document.getElementById('supplierInfoBody');if(!body)return;
-    body.innerHTML=list.map(function(s){
-      var emailCell=s.email
-        ?'<a href="mailto:'+s.email+'" style="color:var(--accent);text-decoration:none;font-size:11px">'+s.email+'</a>'
-        :'—';
-      return '<tr>'+
-        '<td style="color:var(--muted);font-size:11px;text-align:center;font-weight:600">'+s.no+'</td>'+
-        '<td style="font-weight:700;font-size:12px;color:var(--accent);white-space:nowrap">'+s.payTo+'</td>'+
-        '<td class="tbl-supplier" style="font-size:12px">'+s.name+'</td>'+
-        '<td style="font-size:11px">'+s.bank+'</td>'+
-        '<td style="font-family:monospace;font-size:12px;letter-spacing:.3px;white-space:nowrap">'+s.account+'</td>'+
-        '<td style="font-size:12px;white-space:nowrap">'+s.contact+'</td>'+
-        '<td style="font-size:11px">'+emailCell+'</td>'+
-      '</tr>';
-    }).join('');
-  }
-  var sel=dd?dd.value:'';
-  var q=document.querySelector('#page-supplier-info .search-input');
-  var qv=q?q.value.toLowerCase():'';
-  var filtered=SUPPLIER_INFO.filter(function(s){
-    if(sel&&String(s.no)!==String(sel))return false;
-    if(qv&&(s.name+s.payTo+s.bank+s.contact+s.email).toLowerCase().indexOf(qv)<0)return false;
-    return true;
+  var supMap={};
+  allData.forEach(function(d){
+    if(!supMap[d.supplier]) supMap[d.supplier]={bank:d.bank,bankAcc:d.bankAcc||'—',swift:d.swift||'—',total:0,paid:0,pending:0,statuses:[]};
+    supMap[d.supplier].total+=d.amount;
+    supMap[d.supplier].paid+=d.paid;
+    supMap[d.supplier].pending+=d.pending;
+    if(supMap[d.supplier].statuses.indexOf(d.status)<0) supMap[d.supplier].statuses.push(d.status);
   });
-  renderRows(filtered);
+  var suppliers=Object.keys(supMap).sort();
+
+  // Populate dropdown
+  var dd=document.getElementById('supplierDropdown');
+  var prev=dd.value;
+  dd.innerHTML='<option value="">All Suppliers</option>'+suppliers.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+  if(prev) dd.value=prev;
+
+  function renderRows(list){
+    document.getElementById('supplierInfoBody').innerHTML=list.map(function(sup,i){
+      var s=supMap[sup];
+      var ms;
+      if(s.pending<=0){
+        ms='Paid';
+      } else {
+        var unpaidStatuses=[];
+        allData.filter(function(d){return d.supplier===sup&&d.pending>0;}).forEach(function(d){
+          if(unpaidStatuses.indexOf(d.status)<0) unpaidStatuses.push(d.status);
+        });
+        var so=['Overdue','Due Soon','Pending','Blocked'];
+        ms='Pending';
+        for(var si=0;si<so.length;si++){if(unpaidStatuses.indexOf(so[si])>=0){ms=so[si];break;}}
+      }
+      return '<tr>'+
+        '<td style="color:var(--muted);font-size:11px;text-align:right">'+(i+1)+'</td>'+
+        '<td class="tbl-supplier">'+sup+'</td>'+
+        '<td style="font-size:12px;white-space:nowrap">'+s.bank+'</td>'+
+        '<td class="tbl-bank">'+s.bankAcc+'</td>'+
+        '<td style="font-size:12px;letter-spacing:.5px;white-space:nowrap;color:var(--muted)">'+s.swift+'</td>'+
+        '</tr>';
+    }).join('');
+  }
+
+  var selected=dd.value;
+  renderRows(selected?suppliers.filter(function(s){return s===selected;}):suppliers);
+
+  // Store renderRows for filter use
+  window._supRenderRows=renderRows;
+  window._supList=suppliers;
 }
 function filterSupplierInfo(val){
   if(window._supRenderRows&&window._supList){
     window._supRenderRows(val?window._supList.filter(function(s){return s===val;}):window._supList);
   }
 }
-function searchSupplierInfo(q){renderSupplierInfo();}
+function searchSupplierInfo(q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#supplierInfoBody tr').forEach(function(row){
+    row.style.display=row.textContent.toLowerCase().indexOf(q)>=0?'':'none';
+  });
+}
 
 // ===== AGING =====
 var agingDonutInst=null,agingSupInst=null;
@@ -1290,21 +1250,59 @@ function filterStatus(status,btn){
 }
 function filterDetailTable(q){applyDetailFilters();}
 function applyDetailFilters(){
-  var sups=[];allData.forEach(function(d){if(sups.indexOf(d.supplier)<0)sups.push(d.supplier);});sups.sort();
-  msUpdate("mw-ds","det-sup",sups,applyDetailFilters);
-  var pmts=[];allData.forEach(function(d){if(!d.pmtDate||d.pmtDate==="—")return;if(pmts.indexOf(d.pmtDate)<0)pmts.push(d.pmtDate);});
-  pmts.sort(function(a,b){var p=function(s){var x=s.split("-");var y=parseInt(x[1]||0);if(y<100)y+=2000;var m=monthAbbr.indexOf(x[0]);return y*12+(m>=0?m:0);};return p(a)-p(b);});
-  msUpdate("mw-dp","det-pmt",pmts,applyDetailFilters);
+  var ddSup=document.getElementById('detail-supplier');
+  var ddPmt=document.getElementById('detail-pmtdate');
+
+  // Populate Supplier dropdown
+  if(ddSup){
+    var sups=[];
+    allData.forEach(function(d){if(sups.indexOf(d.supplier)<0) sups.push(d.supplier);});
+    sups.sort();
+    var prevS=ddSup.value;
+    ddSup.innerHTML='<option value="">All Suppliers</option>'+sups.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+    if(prevS) ddSup.value=prevS;
+  }
+
+  // Populate PMT Date dropdown từ cột T — nhóm theo "Mon-YYYY"
+  if(ddPmt){
+    var pmtMonths=[];
+    allData.forEach(function(d){
+      if(!d.pmtDate||d.pmtDate==='—') return;
+      // pmtDate đã chuẩn hóa dạng "Mar-2026"
+      if(pmtMonths.indexOf(d.pmtDate)<0) pmtMonths.push(d.pmtDate);
+    });
+    // Sắp xếp theo thứ tự thời gian
+    pmtMonths.sort(function(a,b){
+      var parse=function(s){
+        var p=s.split('-');
+        var yr=parseInt(p[1]||'0');if(yr<100)yr+=2000;
+        var mi=monthAbbr.indexOf(p[0]);
+        return yr*12+(mi>=0?mi:0);
+      };
+      return parse(a)-parse(b);
+    });
+    var prevP=ddPmt.value;
+    ddPmt.innerHTML='<option value="">All PMT Date</option>'+pmtMonths.map(function(m){
+      return '<option value="'+m+'">'+m+'</option>';
+    }).join('');
+    if(prevP) ddPmt.value=prevP;
+  }
+
+  var supplier=ddSup?ddSup.value:'';
+  var pmtMonth=ddPmt?ddPmt.value:'';
+  var priority=document.getElementById('detail-priority')?document.getElementById('detail-priority').value:'';
+  var status=document.getElementById('detail-status')?document.getElementById('detail-status').value:'';
+
   var data=allData.filter(function(d){
-    if(!msMatch("det-sup",d.supplier))return false;
-    if(!msMatch("det-pmt",d.pmtDate))return false;
-    if(!msMatch("det-pri",d.priority))return false;
-    if(!msMatchLow("det-sta",d.status))return false;
+    if(supplier&&d.supplier!==supplier) return false;
+    // Filter theo PMT date — so sánh trực tiếp "Mar-2026"
+    if(pmtMonth&&d.pmtDate!==pmtMonth) return false;
+    if(priority&&d.priority!==priority) return false;
+    if(status&&d.status!==status) return false;
     return true;
   });
   renderDetailTable(data);
 }
-
 
 function initConfirmation(){
   var sel=document.getElementById('confNoSelect');if(!sel)return;
@@ -1354,7 +1352,6 @@ function renderConfirmation(){
   if(empty)empty.style.display='none';
 }
 
-
 // ===== AUTO-REFRESH (5 min) =====
 (function(){
   var INTERVAL = 5 * 60 * 1000;
@@ -1397,55 +1394,18 @@ function renderConfirmation(){
   scheduleNext();
 })();
 
+function initMultiSelects(){
+  msCreate('mw-dpr','det-pri',OPTS_PRI_DET,applyDetailFilters);
+  msCreate('mw-dst','det-sta',OPTS_STATUS,applyDetailFilters);
+  msUpdate('mw-dp','det-pmt',[],applyDetailFilters);
+  msUpdate('mw-ds','det-sup',[],applyDetailFilters);
+}
+
 // ===== INIT =====
-// ===== MULTI-SELECT ENGINE =====
-var _S={},_O={},_C={},_W={};
-function _msR(id){
-  var w=document.getElementById(_W[id]);if(!w)return;
-  var sel=_S[id]||new Set(),n=sel.size,o=_O[id]||[];
-  var lbl=w.getAttribute("data-label")||id;
-  var txt=n===0?lbl:(n===1?Array.from(sel)[0]:lbl);
-  var cnt=n>0?" <span class=\"ms-cnt\">"+n+"</span>":"";
-  var cls="ms-btn"+(n>0?" msa":"");
-  var items=o.map(function(x){
-    var v=typeof x==="string"?x:x.v,t=typeof x==="string"?x:x.t,c=sel.has(v);
-    return "<div class=\"ms-item"+(c?" mss":"")+"\" data-v=\""+v.replace(/"/g,"&quot;")+"\" onclick=\"_msT('"+id+"',this)\">"+"<input type=\"checkbox\""+(c?" checked":"")+" onclick=\"event.stopPropagation()\"><span>"+t+"</span></div>";
-  }).join("");
-  w.innerHTML="<div class=\""+cls+"\" onclick=\"_msO('"+id+"')\">"+txt+cnt+"<span class=\"ms-caret\">&#9660;</span></div>"+"<div class=\"ms-panel\" id=\"msp-"+id+"\">"+"<input class=\"ms-psrch\" placeholder=\"Search...\" oninput=\"_msSr('"+id+"',this.value)\">"+
-"<div class=\"ms-list\" id=\"msl-"+id+"\">"+items+"</div>"+"<div class=\"ms-foot\"><button class=\"ms-clr\" onclick=\"_msC('"+id+"')\">Clear</button><button class=\"ms-all\" onclick=\"_msA('"+id+"')\">All</button></div></div>";
-}
-function msCreate(wid,id,o,cb){_S[id]=_S[id]||new Set();_O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);}
-function msUpdate(wid,id,o,cb){
-  if(!_S[id])_S[id]=new Set();
-  var v=o.map(function(x){return typeof x==="string"?x:x.v;});
-  _S[id].forEach(function(s){if(v.indexOf(s)<0)_S[id].delete(s);});
-  _O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);
-}
-function _msO(id){
-  var p=document.getElementById("msp-"+id);if(!p)return;
-  var was=p.classList.contains("open");
-  document.querySelectorAll(".ms-panel.open").forEach(function(x){x.classList.remove("open");});
-  if(!was){p.classList.add("open");var s=p.querySelector(".ms-psrch");if(s){s.value="";s.focus();_msSr(id,"");}}
-}
-function _msT(id,el){var v=el.getAttribute("data-v");if(!_S[id])_S[id]=new Set();if(_S[id].has(v))_S[id].delete(v);else _S[id].add(v);_msR(id);var p=document.getElementById("msp-"+id);if(p)p.classList.add("open");if(_C[id])_C[id]();}
-function _msC(id){_S[id]=new Set();_msR(id);var p=document.getElementById("msp-"+id);if(p)p.classList.add("open");if(_C[id])_C[id]();}
-function _msA(id){_S[id]=new Set((_O[id]||[]).map(function(x){return typeof x==="string"?x:x.v;}));_msR(id);var p=document.getElementById("msp-"+id);if(p)p.classList.add("open");if(_C[id])_C[id]();}
-function _msSr(id,q){q=q.toLowerCase();document.querySelectorAll("#msl-"+id+" .ms-item").forEach(function(e){e.style.display=e.textContent.toLowerCase().indexOf(q)>=0?"":"none";});}
-function msMatch(id,val){if(!_S[id]||_S[id].size===0)return true;return _S[id].has(val);}
-function msMatchLow(id,val){if(!_S[id]||_S[id].size===0)return true;var v=(val||"").toLowerCase();var f=false;_S[id].forEach(function(s){if(s.toLowerCase()===v)f=true;});return f;}
-document.addEventListener("click",function(e){if(!e.target.closest(".ms-wrap"))document.querySelectorAll(".ms-panel.open").forEach(function(p){p.classList.remove("open");});});
-
-function initDetMS(){
-  var PRI=[{v:"🔴 Urgent",t:"🔴 Urgent"},{v:"🟠 Planned",t:"🟠 Planned"},{v:"🟢 Consider",t:"🟢 Consider"},{v:"⚫ Blocked",t:"⚫ Blocked"},{v:"✅ Done",t:"✅ Done"}];
-  var STA=[{v:"Overdue",t:"🔴 Overdue"},{v:"Due soon",t:"🟡 Due Soon"},{v:"Due Soon",t:"🟡 Due Soon"},{v:"Pending",t:"⏳ Pending"},{v:"Paid",t:"✅ Paid"},{v:"Blocked",t:"⚫ Blocked"}];
-  msCreate("mw-dpr","det-pri",PRI,applyDetailFilters);
-  msCreate("mw-dst","det-sta",STA,applyDetailFilters);
-  msUpdate("mw-dp","det-pmt",[],applyDetailFilters);
-  msUpdate("mw-ds","det-sup",[],applyDetailFilters);
-}
-initDetMS();
+initMultiSelects();
+setTimeout(function(){initConfirmation();},200);
 loadData();
-
+startAutoRefresh();
 </script>
 </body>
 </html>
