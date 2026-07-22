@@ -362,7 +362,7 @@ tbody td.center{text-align:center}
     <div>
       <div class="page-eyebrow">Financial Data · 2026</div>
       <div class="page-title">Supplier Information</div>
-      <div class="page-subtitle">Bank account &amp; contact details</div>
+      <div class="page-subtitle">18 suppliers · Source: Supplier info tab · Auto-updates with live data</div>
     </div>
   </div>
   <div class="filter-bar">
@@ -377,11 +377,12 @@ tbody td.center{text-align:center}
     <div class="table-header"><span class="table-title">Supplier Bank Details</span></div>
     <table style="min-width:700px">
       <thead><tr>
-        <th style="width:40px">No</th>
+        <th style="width:30px">No</th>
         <th>Pay To</th>
         <th>Supplier Name</th>
         <th>Beneficiary Bank</th>
         <th>Account Number</th>
+        <th>Swift Code</th>
         <th>Contact Name</th>
         <th>Email</th>
       </tr></thead>
@@ -536,24 +537,24 @@ tbody td.center{text-align:center}
 
 <script>
 var SUPPLIER_INFO=[
-  {no:1,payTo:"ICEIE",name:"International Centre For Edtech Impact",account:"NO54 3185 42 74395",bank:"SPAREBANK 1",contact:"Saila",email:"eduevidence1@eduevidence.org"},
-  {no:2,payTo:"ATOM AUDIT",name:"Atom Assurances Services",account:"736305000472",bank:"ICICI BANK LTD.",contact:"Varun Guptha",email:"varun@atomaudits.com"},
-  {no:3,payTo:"EQUIFIS",name:"Equifis Associates Pte. Ltd",account:"647327477001",bank:"OCBC Bank",contact:"Chow Hoe Keong",email:"chowhoekeong@equifis.com"},
-  {no:4,payTo:"NIKOLA",name:"Nikola Plavšić Pr Računarsko Programiranje",account:"RS35325960270010209517",bank:"OTP Bank Srbija",contact:"",email:""},
-  {no:5,payTo:"SPRINTO",name:"Sprinto Inc.",account:"3304464694",bank:"First Citizens Bank and Trust Co.",contact:"Ajay",email:"ajayt@sprinto.com"},
-  {no:6,payTo:"RENOVA",name:"Renova Cloud Hk Limited",account:"503380354301",bank:"OCBC Singapore",contact:"Dieu Nguyen",email:"dieu.nguyen@renovacloud.com"},
-  {no:7,payTo:"ACCLIME",name:"Acclime Singapore Pte Ltd",account:"0659015824 (a/c SGD)",bank:"DBS BANK LTD",contact:"Sibing Tan",email:"s.tan@acclime.com"},
-  {no:8,payTo:"KEYTECHX",name:"Keytechx Pte. Ltd",account:"8853798635",bank:"DBS Bank Ltd.",contact:"Thuong Dao",email:"thuong@keytechx.com"},
-  {no:9,payTo:"CLOUD ACE",name:"Cloud Ace Co., Ltd.",account:"1602201366493",bank:"Agribank of Vietnam Branch 3",contact:"Trần Khả Tú",email:"tutran@cloud-ace.com"},
-  {no:10,payTo:"Arc Warden",name:"Arc Warden Limited",account:"47411853926",bank:"Standard Chartered Bank (Hong Kong) Limited",contact:"Nguyet Le",email:"nguyetle@genialaw.com"},
-  {no:11,payTo:"OOOE",name:"One On One English Company Limited",account:"1903 3536 051 011",bank:"Techcombank Sai Gon Branch",contact:"",email:""},
-  {no:12,payTo:"WYKEHAM",name:"Wykeham Corporate Services Ltd",account:"503472177301",bank:"OCBC Bank",contact:"Nguyet Le",email:"Nguyet.Le@acsvlegal.com"},
-  {no:13,payTo:"LVD",name:"Lvd Services Pte Ltd",account:"1049016277",bank:"DBS BANK LTD",contact:"Chiewha Ngui",email:"chiewha.ngui@lvdglobal.com.sg"},
-  {no:14,payTo:"HUBSPOT",name:"HubSpot Asia Pte Ltd",account:"71026029",bank:"Bank of America, N.A., Singapore",contact:"HubSpot Billing",email:"billing@hubspot.com"},
-  {no:15,payTo:"TRI-ATOM",name:"TriAtom Assurance Services Private Limited",account:"736305000690",bank:"ICICI BANK LTD Prashanth Nagar Branch",contact:"Ajay Tambe",email:"aj@atomaudits.com"},
-  {no:16,payTo:"OMNI",name:"People Intelligence Singapore Pte. Ltd",account:"8853798181",bank:"DBS Bank Ltd",contact:"",email:"invoice@omnihr.co"},
-  {no:17,payTo:"CHARLTON",name:"Charlton Media Group Pte Ltd",account:"4019011245",bank:"United Overseas Bank Limited",contact:"CMG Accounting",email:"accounting@charltonmediamail.com"},
-  {no:18,payTo:"LAVI",name:"Manh Vu Linh",account:"105709827 (VND)",bank:"Vietnam Prosperity Joint Stock Commercial Bank (VPB)",contact:"Linh Mạnh",email:"hello@lavidesign.studio"}
+  {no:1,payTo:"ICEIE",name:"International Centre For Edtech Impact",account:"NO54 3185 42 74395",bank:"SPAREBANK 1",swift:"SPRONO22",contact:"Saila",email:"eduevidence1@eduevidence.org"},
+  {no:2,payTo:"ATOM AUDIT",name:"Atom Assurances Services",account:"736305000472",bank:"ICICI BANK LTD.",swift:"ICICINBBCTS",contact:"Varun Guptha",email:"varun@atomaudits.com"},
+  {no:3,payTo:"EQUIFIS",name:"Equifis Associates Pte. Ltd",account:"647327477001",bank:"OCBC Bank",swift:"OCBCSGSG",contact:"Chow Hoe Keong",email:"chowhoekeong@equifis.com"},
+  {no:4,payTo:"NIKOLA",name:"Nikola Plavšić Pr Računarsko Programiranje",account:"RS35325960270010209517",bank:"OTP Bank Srbija",swift:"OTPVRS22",contact:"",email:""},
+  {no:5,payTo:"SPRINTO",name:"Sprinto Inc.",account:"3304464694",bank:"First Citizens Bank and Trust Co.",swift:"SVBKUS6S",contact:"Ajay",email:"ajayt@sprinto.com"},
+  {no:6,payTo:"RENOVA",name:"Renova Cloud Hk Limited",account:"503380354301",bank:"OCBC Singapore",swift:"OCBCSGSG",contact:"Dieu Nguyen",email:"dieu.nguyen@renovacloud.com"},
+  {no:7,payTo:"ACCLIME",name:"Acclime Singapore Pte Ltd",account:"0659015824 (a/c SGD)",bank:"DBS BANK LTD",swift:"DBSSSGSG",contact:"Sibing Tan",email:"s.tan@acclime.com"},
+  {no:8,payTo:"KEYTECHX",name:"Keytechx Pte. Ltd",account:"8853798635",bank:"DBS Bank Ltd.",swift:"DBSSSGSG",contact:"Thuong Dao",email:"thuong@keytechx.com"},
+  {no:9,payTo:"CLOUD ACE",name:"Cloud Ace Co., Ltd.",account:"1602201366493",bank:"Agribank of Vietnam Branch 3",swift:"VBAAVNVX824",contact:"Trần Khả Tú",email:"tutran@cloud-ace.com"},
+  {no:10,payTo:"Arc Warden",name:"Arc Warden Limited",account:"47411853926",bank:"Standard Chartered Bank (Hong Kong) Limited",swift:"SCBLHKHH",contact:"Nguyet Le",email:"nguyetle@genialaw.com"},
+  {no:11,payTo:"OOOE",name:"One On One English Company Limited",account:"1903 3536 051 011",bank:"Techcombank Sai Gon Branch",swift:"VTCBVNVX",contact:"",email:""},
+  {no:12,payTo:"WYKEHAM",name:"Wykeham Corporate Services Ltd",account:"503472177301",bank:"OCBC Bank",swift:"OCBCSGSG",contact:"Nguyet Le",email:"Nguyet.Le@acsvlegal.com"},
+  {no:13,payTo:"LVD",name:"Lvd Services Pte Ltd",account:"1049016277",bank:"DBS BANK LTD",swift:"DBSSSGSG",contact:"Chiewha Ngui",email:"chiewha.ngui@lvdglobal.com.sg"},
+  {no:14,payTo:"HUBSPOT",name:"HubSpot Asia Pte Ltd",account:"71026029",bank:"Bank of America, N.A., Singapore",swift:"BOFASG2XXXX",contact:"HubSpot Billing",email:"billing@hubspot.com"},
+  {no:15,payTo:"TRI-ATOM AUDIT",name:"TriAtom Assurance Services Private Limited",account:"736305000690",bank:"ICICI BANK LTD - Prashanth Nagar Branch",swift:"ICICINBBCTS",contact:"Ajay Tambe",email:"aj@atomaudits.com"},
+  {no:16,payTo:"OMNI",name:"People Intelligence Singapore Pte. Ltd",account:"8853798181",bank:"DBS Bank Ltd",swift:"DBSSSGSG",contact:"",email:"invoice@omnihr.co"},
+  {no:17,payTo:"CHARLTON MEDIA",name:"Charlton Media Group Pte Ltd",account:"4019011245",bank:"United Overseas Bank Limited",swift:"UOVBSGSG",contact:"CMG Accounting",email:"accounting@charltonmediamail.com"},
+  {no:18,payTo:"LAVI",name:"Manh Vu Linh",account:"105709827 (VND)",bank:"Vietnam Prosperity Joint Stock Commercial Bank (VPB)",swift:"VPBKVNVX",contact:"Linh Mạnh",email:"hello@lavidesign.studio"}
 ];
 
 // ===== CONFIG =====
@@ -1110,53 +1111,41 @@ function applyMonthlyFilter(){
 
 // ===== SUPPLIER INFO =====
 function renderSupplierInfo(){
-  var supMap={};
-  allData.forEach(function(d){
-    if(!supMap[d.supplier]) supMap[d.supplier]={bank:d.bank,bankAcc:d.bankAcc||'—',swift:d.swift||'—',total:0,paid:0,pending:0,statuses:[]};
-    supMap[d.supplier].total+=d.amount;
-    supMap[d.supplier].paid+=d.paid;
-    supMap[d.supplier].pending+=d.pending;
-    if(supMap[d.supplier].statuses.indexOf(d.status)<0) supMap[d.supplier].statuses.push(d.status);
-  });
-  var suppliers=Object.keys(supMap).sort();
-
   // Populate dropdown
   var dd=document.getElementById('supplierDropdown');
-  var prev=dd.value;
-  dd.innerHTML='<option value="">All Suppliers</option>'+suppliers.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
-  if(prev) dd.value=prev;
-
-  function renderRows(list){
-    document.getElementById('supplierInfoBody').innerHTML=list.map(function(sup,i){
-      var s=supMap[sup];
-      var ms;
-      if(s.pending<=0){
-        ms='Paid';
-      } else {
-        var unpaidStatuses=[];
-        allData.filter(function(d){return d.supplier===sup&&d.pending>0;}).forEach(function(d){
-          if(unpaidStatuses.indexOf(d.status)<0) unpaidStatuses.push(d.status);
-        });
-        var so=['Overdue','Due Soon','Pending','Blocked'];
-        ms='Pending';
-        for(var si=0;si<so.length;si++){if(unpaidStatuses.indexOf(so[si])>=0){ms=so[si];break;}}
-      }
-      return '<tr>'+
-        '<td style="color:var(--muted);font-size:11px;text-align:right">'+(i+1)+'</td>'+
-        '<td class="tbl-supplier">'+sup+'</td>'+
-        '<td style="font-size:12px;white-space:nowrap">'+s.bank+'</td>'+
-        '<td class="tbl-bank">'+s.bankAcc+'</td>'+
-        '<td style="font-size:12px;letter-spacing:.5px;white-space:nowrap;color:var(--muted)">'+s.swift+'</td>'+
-        '</tr>';
-    }).join('');
+  var prev=dd?dd.value:'';
+  if(dd){
+    dd.innerHTML='<option value="">All Suppliers</option>'+
+      SUPPLIER_INFO.map(function(s){
+        return '<option value="'+s.no+'">'+s.no+'. '+s.payTo+' — '+s.name+'</option>';
+      }).join('');
+    if(prev) dd.value=prev;
   }
-
-  var selected=dd.value;
-  renderRows(selected?suppliers.filter(function(s){return s===selected;}):suppliers);
-
-  // Store renderRows for filter use
-  window._supRenderRows=renderRows;
-  window._supList=suppliers;
+  // Filter
+  var selNo=dd?parseInt(dd.value):NaN;
+  var q=(document.querySelector('#page-supplier-info .search-input')||{}).value||'';
+  q=q.toLowerCase();
+  var list=SUPPLIER_INFO.filter(function(s){
+    if(!isNaN(selNo)&&s.no!==selNo)return false;
+    if(q&&(s.name+s.payTo+s.bank+s.contact+s.email+s.account).toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+  // Render rows
+  var body=document.getElementById('supplierInfoBody');
+  if(!body)return;
+  body.innerHTML=list.map(function(s){
+    var email=s.email?'<a href="mailto:'+s.email+'" style="color:var(--accent);text-decoration:none;font-size:11px">'+s.email+'</a>':'—';
+    return '<tr>'+
+      '<td style="text-align:center;font-size:11px;color:var(--muted);font-weight:700">'+s.no+'</td>'+
+      '<td style="font-weight:700;font-size:12px;color:var(--accent)">'+s.payTo+'</td>'+
+      '<td style="font-size:12px">'+s.name+'</td>'+
+      '<td style="font-size:11px">'+s.bank+'</td>'+
+      '<td style="font-family:monospace;font-size:12px;letter-spacing:.3px;white-space:nowrap">'+s.account+'</td>'+
+      '<td style="font-size:11px;color:var(--muted)">'+s.swift+'</td>'+
+      '<td style="font-size:12px;white-space:nowrap">'+s.contact+'</td>'+
+      '<td style="font-size:11px">'+email+'</td>'+
+    '</tr>';
+  }).join('');
 }
 function filterSupplierInfo(val){
   if(window._supRenderRows&&window._supList){
