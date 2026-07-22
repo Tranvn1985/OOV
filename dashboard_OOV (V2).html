@@ -684,58 +684,65 @@ var STATIC_DATA = [
 // ===== LOAD DATA FROM GOOGLE SHEETS =====
 function loadData(){
   var btn=document.getElementById('refreshBtn');
-  if(btn){btn.textContent='\u23F3 Loading...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Loading...';btn.disabled=true;}
   var badge=document.getElementById('autoBadge');
-  if(badge) badge.classList.add('syncing');
+  if(badge)badge.classList.add('syncing');
 
-  var pubUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
-  var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(pubUrl);
+  var PUB='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
+  var PROXY='https://api.allorigins.win/raw?url='+encodeURIComponent(PUB);
 
-  function onOK(data){
+  function isValidCSV(txt){
+    if(!txt||txt.length<50)return false;
+    // Reject HTML responses
+    var t=txt.trim().toLowerCase();
+    if(t.indexOf('<!doctype')==0||t.indexOf('<html')==0)return false;
+    if(t.indexOf('function()')>=0&&t.indexOf('window')>=0)return false;
+    if(t.indexOf('{type:access')>=0)return false;
+    // Must have comma-separated content
+    var firstLine=txt.split('\n')[0]||'';
+    return firstLine.indexOf(',')>=0;
+  }
+
+  function done(txt){
+    var data=parseSheetData(txt);
+    if(!data||data.length<3){useFallback('Too few records');return;}
     allData=data;
     var now=new Date();
     var ts=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
            String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     var ls=document.getElementById('lastSync');if(ls)ls.textContent=ts;
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=ts;
-    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
+    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
   }
 
-  function onFail(){
+  function useFallback(reason){
+    console.warn('Fallback:',reason);
     allData=STATIC_DATA;
-    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static \u00B7 Jul-2026';
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static \u00B7 Jul-2026';
-    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
+    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
+    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
   }
 
   function tryPub(){
-    fetch(pubUrl)
+    fetch(PUB)
       .then(function(r){return r.text();})
       .then(function(txt){
-        var d=parseSheetData(txt);
-        if(d&&d.length>5){onOK(d);}else{tryProxy();}
+        if(isValidCSV(txt))done(txt);else tryProxy();
       })
       .catch(function(){tryProxy();});
   }
 
   function tryProxy(){
-    fetch(proxyUrl)
+    fetch(PROXY)
       .then(function(r){return r.text();})
       .then(function(txt){
-        var d=parseSheetData(txt);
-        if(d&&d.length>5){onOK(d);}else{onFail();}
+        if(isValidCSV(txt))done(txt);else useFallback('Invalid CSV from proxy');
       })
-      .catch(function(){onFail();});
+      .catch(function(){useFallback('Network error');});
   }
 
   tryPub();
