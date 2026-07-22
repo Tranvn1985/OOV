@@ -811,7 +811,8 @@ function showPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   if(el) el.classList.add('active');
   currentPage=id;
-  renderCurrentPage();
+  if(id==='confirmation') initConfirmation();
+  else renderCurrentPage();
 }
 
 function renderCurrentPage(){
@@ -1419,10 +1420,27 @@ function renderConfirmation(){
 })();
 
 function initMultiSelects(){
-  msCreate('mw-dpr','det-pri',OPTS_PRI_DET,applyDetailFilters);
-  msCreate('mw-dst','det-sta',OPTS_STATUS,applyDetailFilters);
-  msUpdate('mw-dp','det-pmt',[],applyDetailFilters);
-  msUpdate('mw-ds','det-sup',[],applyDetailFilters);
+  var OPTS_PRI=[
+    {v:'🔴 Urgent',t:'🔴 Urgent'},
+    {v:'🟠 Planned',t:'🟠 Planned'},
+    {v:'🟢 Consider',t:'🟢 Consider'},
+    {v:'⚫ Blocked',t:'⚫ Blocked'},
+    {v:'✅ Done',t:'✅ Done'}
+  ];
+  var OPTS_STA=[
+    {v:'Overdue',t:'🔴 Overdue'},
+    {v:'Due soon',t:'🟡 Due Soon'},
+    {v:'Due Soon',t:'🟡 Due Soon'},
+    {v:'Pending',t:'⏳ Pending'},
+    {v:'Paid',t:'✅ Paid'},
+    {v:'Blocked',t:'⚫ Blocked'}
+  ];
+  if(typeof msCreate==='function'){
+    msCreate('mw-dpr','det-pri',OPTS_PRI,applyDetailFilters);
+    msCreate('mw-dst','det-sta',OPTS_STA,applyDetailFilters);
+    msUpdate('mw-dp','det-pmt',[],applyDetailFilters);
+    msUpdate('mw-ds','det-sup',[],applyDetailFilters);
+  }
 }
 
 // ===== INIT =====
