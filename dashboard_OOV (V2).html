@@ -691,22 +691,25 @@ function loadData(){
   var PUB='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
   var PROXY='https://api.allorigins.win/raw?url='+encodeURIComponent(PUB);
 
-  function isValidCSV(txt){
-    if(!txt||txt.length<50)return false;
-    // Reject HTML responses
-    var t=txt.trim().toLowerCase();
-    if(t.indexOf('<!doctype')==0||t.indexOf('<html')==0)return false;
-    if(t.indexOf('function()')>=0&&t.indexOf('window')>=0)return false;
-    if(t.indexOf('{type:access')>=0)return false;
-    // Must have comma-separated content
-    var firstLine=txt.split('\n')[0]||'';
-    return firstLine.indexOf(',')>=0;
+  // Strict CSV validation - reject anything that looks like HTML or JS
+  function isCSV(txt){
+    if(!txt||txt.length<100)return false;
+    var s=txt.trim();
+    // Reject if starts with HTML tags
+    if(s[0]==='<')return false;
+    // Reject if contains typical HTML/JS patterns
+    var bad=['<!doctype','<html','<head','window.location','function(){','function ()','var e=','{type:'];
+    var low=s.substring(0,200).toLowerCase();
+    for(var i=0;i<bad.length;i++){if(low.indexOf(bad[i])>=0)return false;}
+    // Must have commas (CSV structure)
+    var first=s.split('\n')[0]||'';
+    return first.split(',').length>=3;
   }
 
-  function done(txt){
-    var data=parseSheetData(txt);
-    if(!data||data.length<3){useFallback('Too few records');return;}
-    allData=data;
+  function onOK(txt){
+    var parsed=parseSheetData(txt);
+    if(!parsed||parsed.length<5){useFallback('No valid records parsed');return;}
+    allData=parsed;
     var now=new Date();
     var ts=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
            String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
@@ -718,7 +721,7 @@ function loadData(){
   }
 
   function useFallback(reason){
-    console.warn('Fallback:',reason);
+    console.log('Using static data:',reason);
     allData=STATIC_DATA;
     var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
@@ -727,26 +730,33 @@ function loadData(){
     renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
   }
 
-  function tryPub(){
-    fetch(PUB)
-      .then(function(r){return r.text();})
-      .then(function(txt){
-        if(isValidCSV(txt))done(txt);else tryProxy();
-      })
-      .catch(function(){tryProxy();});
-  }
+  // Try pub URL first (2s timeout), then proxy (4s timeout), then static
+  var t1=setTimeout(function(){tryProxy();},2000);
+  var done=false;
+
+  fetch(PUB)
+    .then(function(r){return r.text();})
+    .then(function(txt){
+      if(done)return;
+      if(isCSV(txt)){done=true;clearTimeout(t1);onOK(txt);}
+      // If not valid CSV, let timeout trigger proxy
+    })
+    .catch(function(){/* let timeout handle */});
 
   function tryProxy(){
+    if(done)return;
+    var t2=setTimeout(function(){if(!done){done=true;useFallback('Timeout');}},5000);
     fetch(PROXY)
       .then(function(r){return r.text();})
       .then(function(txt){
-        if(isValidCSV(txt))done(txt);else useFallback('Invalid CSV from proxy');
+        if(done)return;
+        done=true;clearTimeout(t2);
+        if(isCSV(txt))onOK(txt);else useFallback('Proxy returned non-CSV');
       })
-      .catch(function(){useFallback('Network error');});
+      .catch(function(){if(!done){done=true;clearTimeout(t2);useFallback('Proxy error');}});
   }
-
-  tryPub();
 }
+
 
 function parseSheetData(csvText){
   var rows=parseCSV(csvText);
