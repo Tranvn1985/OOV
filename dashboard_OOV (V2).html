@@ -876,20 +876,21 @@ function _msR(id){
   var txt=n===0?lbl:(n===1?Array.from(sel)[0]:lbl);
   var cnt=n>0?' <span class="ms-cnt">'+n+'</span>':'';
   var cls='ms-btn'+(n>0?' msa':'');
+  var q="'"; // single quote for onclick attrs
   var items=o.map(function(x){
     var v=typeof x==='string'?x:x.v,t=typeof x==='string'?x:x.t,c=sel.has(v);
     var dv=v.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    return '<div class="ms-item'+(c?' mss':'')+'" data-v="'+dv+'" onclick="_msT(String('+JSON.stringify(id)+'),this)">'+
+    return '<div class="ms-item'+(c?' mss':'')+'" data-v="'+dv+'" onclick="_msT('+q+id+q+',this)">'+
       '<input type="checkbox"'+(c?' checked':'')+' onclick="event.stopPropagation()"><span>'+t+'</span></div>';
   }).join('');
   w.innerHTML=
-    '<div class="'+cls+'" onclick="_msO('+JSON.stringify(id)+')">'+txt+cnt+'<span class="ms-caret">&#9660;</span></div>'+
+    '<div class="'+cls+'" onclick="_msO('+q+id+q+')">'+txt+cnt+'<span class="ms-caret">&#9660;</span></div>'+
     '<div class="ms-panel" id="msp-'+id+'">'+
-    '<input class="ms-psrch" placeholder="Search..." oninput="_msSr('+JSON.stringify(id)+',this.value)">'+
+    '<input class="ms-psrch" placeholder="Search..." oninput="_msSr('+q+id+q+',this.value)">'+
     '<div class="ms-list" id="msl-'+id+'">'+items+'</div>'+
     '<div class="ms-foot">'+
-    '<button class="ms-clr" onclick="_msC('+JSON.stringify(id)+')">Clear</button>'+
-    '<button class="ms-all" onclick="_msA('+JSON.stringify(id)+')">All</button>'+
+    '<button class="ms-clr" onclick="_msC('+q+id+q+')">Clear</button>'+
+    '<button class="ms-all" onclick="_msA('+q+id+q+')">All</button>'+
     '</div></div>';
 }
 function msCreate(wid,id,o,cb){_S[id]=_S[id]||new Set();_O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);}
