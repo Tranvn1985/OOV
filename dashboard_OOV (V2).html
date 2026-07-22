@@ -246,6 +246,36 @@ tbody td.center{text-align:center}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#c5ccff;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ===== MULTI-SELECT CSS ===== */
+.ms-wrap{position:relative;display:inline-block;vertical-align:middle;margin-right:6px}
+.ms-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:6px;
+  border:1.5px solid var(--border);background:var(--surface2);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;
+  min-width:120px;transition:border-color .15s;white-space:nowrap;user-select:none}
+.ms-btn:hover,.ms-btn.msa{border-color:var(--accent);background:#eff2ff;color:var(--accent)}
+.ms-caret{font-size:8px;margin-left:auto;opacity:.4}
+.ms-cnt{background:var(--accent);color:#fff;border-radius:9px;font-size:10px;font-weight:700;
+  padding:0 5px;min-width:16px;text-align:center;display:inline-block}
+.ms-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:200px;max-width:280px;
+  background:var(--surface);border:1.5px solid var(--border);border-radius:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;overflow:hidden}
+.ms-panel.open{display:block}
+.ms-psrch{width:100%;box-sizing:border-box;padding:7px 10px;border:none;
+  border-bottom:1px solid var(--border);font-family:'Inter',sans-serif;font-size:12px;outline:none;
+  background:var(--surface2)}
+.ms-list{max-height:200px;overflow-y:auto}
+.ms-item{display:flex;align-items:center;gap:7px;padding:7px 11px;cursor:pointer;font-size:12px}
+.ms-item:hover{background:#f5f5ff}
+.ms-item.mss{background:#eff2ff;font-weight:600;color:var(--accent)}
+.ms-item input[type=checkbox]{accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.ms-foot{display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--border);background:var(--surface2)}
+.ms-foot button{flex:1;padding:4px 0;border-radius:6px;font-family:'Inter',sans-serif;
+  font-size:11px;font-weight:600;cursor:pointer}
+.ms-clr{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
+.ms-clr:hover{color:#c0392b;border-color:#c0392b}
+.ms-all{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+
 </style>
 </head>
 <body>
@@ -425,20 +455,10 @@ tbody td.center{text-align:center}
     </div>
   </div>
   <div class="filter-bar">
-    <select class="filter-select" id="detail-pmtdate" onchange="applyDetailFilters()">
-      <option value="">All PMT Date</option>
-    </select>
-    <select class="filter-select" id="detail-supplier" onchange="applyDetailFilters()">
-      <option value="">All Suppliers</option>
-    </select>
-    <select class="filter-select" id="detail-priority" onchange="applyDetailFilters()">
-      <option value="">All Priority</option>
-      <option>🔴 Urgent</option><option>🟠 Planned</option><option>🟢 Consider</option><option>⚫ Blocked</option><option>✅ Done</option>
-    </select>
-    <select class="filter-select" id="detail-status" onchange="applyDetailFilters()">
-      <option value="">All Status</option>
-      <option>Overdue</option><option>Due Soon</option><option>Pending</option><option>Paid</option><option>Blocked</option>
-    </select>
+    <div class="ms-wrap" id="mw-dp" data-label="All PMT Date"></div>
+    <div class="ms-wrap" id="mw-ds" data-label="All Suppliers"></div>
+    <div class="ms-wrap" id="mw-dpr" data-label="All Priority"></div>
+    <div class="ms-wrap" id="mw-dst" data-label="All Status"></div>
     <button class="filter-refresh-btn" onclick="loadData()">&#8634; Refresh</button>
   </div>
   <div class="table-card">
@@ -627,7 +647,7 @@ function parseCSV(text){
   return rows;
 }
 
-// ===== STATIC DATA (22-Jul-2026, 31 records — mirrors sheet) =====
+// ===== STATIC DATA (22-Jul-2026, 32 records) =====
 var STATIC_DATA = [
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of VN-Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"205-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN FEB (Inv: 205-26CA)",invDate:"05-Mar-26",dueDate:"17-Mar-26",amount:1294.79,paid:1294.79,pending:0.0,statusPmt:"Paid",pmtDate:"31-Mar-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Mar"},
   {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"754",desc:"PMT AWS SERVICE CHARGES - 01.26 (Inv: 754)",invDate:"12-Feb-26",dueDate:"11-Mar-26",amount:5942.79,paid:5942.79,pending:0.0,statusPmt:"Paid",pmtDate:"24-Mar-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Mar"},
@@ -636,90 +656,87 @@ var STATIC_DATA = [
   {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"81",desc:"PMT ADVISORY SERVICES - 02.26 (Inv: 81)",invDate:"28-Feb-26",dueDate:"25-Mar-26",amount:4500.0,paid:4500.0,pending:0.0,statusPmt:"Paid",pmtDate:"06-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Apr"},
   {supplier:"Charlton Media Group Pte Ltd",bank:"United Overseas Bank Limited",bankAcc:"4019011245",swift:"UOVBSGSG",inv:"260531",desc:"PMT 1st SBR Technology Excellence Awards 2026",invDate:"01-May-26",dueDate:"16-May-26",amount:3215.5,paid:3215.5,pending:0.0,statusPmt:"Paid",pmtDate:"15-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Apr"},
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of VN-Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"336-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN MAR (Inv:336-26CA)",invDate:"05-Apr-26",dueDate:"18-May-26",amount:1362.13,paid:1362.13,pending:0.0,statusPmt:"Paid",pmtDate:"18-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Apr"},
-  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"84",desc:"PMT ADVISORY SERVICES - 03.26 (Inv: 84)",invDate:"31-Mar-26",dueDate:"25-Apr-26",amount:7625.0,paid:0.0,pending:7625.0,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 87",priority:"🔴 Urgent",note:"",monthDebt:"Jul"},
+  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"84",desc:"PMT ADVISORY SERVICES - 03.26 (Inv: 84)",invDate:"31-Mar-26",dueDate:"25-Apr-26",amount:7625.0,paid:0.0,pending:7625.0,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 88",priority:"🔴 Urgent",note:"",monthDebt:"Jul"},
   {supplier:"Sprinto Inc.",bank:"First Citizens Bank and Trust Co. (formerly Silicon Valley Bank)",bankAcc:"3304464694",swift:"SVBKUS6S",inv:"I-US23643",desc:"PMT (3rd) SAAS SUBSCRIPTION FEE FOR SOC 2 COMPLIANCE PLATFORM (INCLUDING ISO 27001 & GDPR) (Inv: I-US23643)",invDate:"19-Mar-26",dueDate:"26-Mar-26",amount:2250.0,paid:2250.0,pending:0.0,statusPmt:"Paid",pmtDate:"17-Apr-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Apr"},
   {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202603-1653b",desc:"PMT EMPLOYEE MANAGEMENT SYSTEM",invDate:"19-Apr-26",dueDate:"26-Apr-26",amount:198.38,paid:198.38,pending:0.0,statusPmt:"Paid",pmtDate:"04-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Apr"},
   {supplier:"Tri-Atom Assurance Services Private Limited",bank:"ICICI BANK LTD-Prashanth Nagar Branch",bankAcc:"736305000690",swift:"ICICINBBCTS",inv:"R-INV260007",desc:"PMT 2nd FOR SOC 2 TYPE 2 AUDIT & ISO 27001 SURVEILLANCE AUDIT SERVICES",invDate:"13-Apr-26",dueDate:"20-Apr-26",amount:1400.0,paid:1400.0,pending:0.0,statusPmt:"Paid",pmtDate:"17-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"May"},
   {supplier:"HubSpot Asia Pte Ltd",bank:"Bank of America, N.A., Singapore",bankAcc:"71026029",swift:"BOFASG2XXXX",inv:"746485945",desc:"PMT 2nd CRM FOR SALE (05/APR-04/JUL) (INV: 746485945)",invDate:"05-Apr-26",dueDate:"05-May-26",amount:2289.0,paid:2289.0,pending:0.0,statusPmt:"Paid",pmtDate:"11-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"May"},
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of VN-Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"517-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN APRIL (Inv:517-26CA)",invDate:"05-May-26",dueDate:"18-May-26",amount:1340.11,paid:1340.11,pending:0.0,statusPmt:"Paid",pmtDate:"18-May-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"May"},
-  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"88",desc:"PMT ADVISORY SERVICES - 04.26 (Inv: 88)",invDate:"30-Apr-26",dueDate:"25-May-26",amount:11125.0,paid:9000.0,pending:2125.0,statusPmt:"Partial Paid",pmtDate:"25-Jun-26",status:"Overdue",overDue:"- 57",priority:"🔴 Urgent",note:"28-May: 1st paid (-4.500 USD), 25-Jun: 2nd paid (-4.500 USD), defferred 2.125 USD",monthDebt:"Jul"},
+  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"88",desc:"PMT ADVISORY SERVICES - 04.26 (Inv: 88)",invDate:"30-Apr-26",dueDate:"25-May-26",amount:11125.0,paid:9000.0,pending:2125.0,statusPmt:"Partial Paid",pmtDate:"25-Jun-26",status:"Overdue",overDue:"- 58",priority:"🔴 Urgent",note:"28-May: 1st paid (-4.500 USD), 25-Jun: 2nd paid (-4.500 USD), defferred 2.125 USD",monthDebt:"Jul"},
   {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"831",desc:"PMT AWS SERVICE CHARGES - 03.26",invDate:"14-Apr-26",dueDate:"30-Jun-26",amount:6360.91,paid:6360.91,pending:0.0,statusPmt:"Paid",pmtDate:"03-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"Issued invoice on 01/Jun (-$ 3.571 credit)",monthDebt:"May"},
   {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"843",desc:"PMT AWS SERVICE CHARGES - 04.26",invDate:"15-May-26",dueDate:"30-Jun-26",amount:6678.72,paid:6678.72,pending:0.0,statusPmt:"Paid",pmtDate:"25-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"Invoice issued 01/Jun (-$1,464 credit)",monthDebt:"Jun"},
   {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202605-2193",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 05.26",invDate:"25-May-26",dueDate:"01-Jun-26",amount:175.7,paid:175.7,pending:0.0,statusPmt:"Paid",pmtDate:"05-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"May"},
   {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202603-1652a",desc:"PMT THE EMPLOYEE MANAGEMENT SYSTEM - 03.26",invDate:"10-Mar-26",dueDate:"17-Mar-26",amount:102.56,paid:102.56,pending:0.0,statusPmt:"Paid",pmtDate:"16-Mar-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"May"},
   {supplier:"Manh Vu Linh",bank:"VPB",bankAcc:"105709827 (VND)",swift:"VPBKVNVX",inv:"No number",desc:"UI/UX WEB DESIGN SERVICES",invDate:"",dueDate:"03-Jun-26",amount:990.0,paid:990.0,pending:0.0,statusPmt:"Paid",pmtDate:"04-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"May"},
-  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"92",desc:"PMT ADVISORY SERVICES - 05.26 (Inv: 92)",invDate:"31-May-26",dueDate:"25-Jun-26",amount:11125.0,paid:0.0,pending:11125.0,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 26",priority:"🔴 Urgent",note:"",monthDebt:"Aug"},
+  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"92",desc:"PMT ADVISORY SERVICES - 05.26 (Inv: 92)",invDate:"31-May-26",dueDate:"25-Jun-26",amount:11125.0,paid:0.0,pending:11125.0,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 27",priority:"🔴 Urgent",note:"",monthDebt:"Aug"},
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of VN-Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"651-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN MAY",invDate:"05-Jun-26",dueDate:"24-Jun-26",amount:781.3,paid:781.3,pending:0.0,statusPmt:"Paid",pmtDate:"25-Jun-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Jun"},
   {supplier:"Charlton Media Group Pte Ltd",bank:"United Overseas Bank Limited",bankAcc:"4019011245",swift:"UOVBSGSG",inv:"260532",desc:"PMT 2nd SBR Technology Excellence Awards 2026",invDate:"01-May-26",dueDate:"30-Jun-26",amount:3215.5,paid:3215.5,pending:0.0,statusPmt:"Paid",pmtDate:"13-Jul-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"Ms.Nga email 23-Jun: extend 2 weeks",monthDebt:"Jun"},
-  {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"900",desc:"PMT AWS SERVICE CHARGES - 05.26",invDate:"11-Jun-26",dueDate:"10-Jul-26",amount:3942.93,paid:0.0,pending:3942.93,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 11",priority:"🔴 Urgent",note:"",monthDebt:"Jul"},
-  {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202606-2355",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 06.26",invDate:"12-Jun-26",dueDate:"19-Jun-26",amount:170.04,paid:0.0,pending:170.04,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 32",priority:"🔴 Urgent",note:"05-Jul: paid for July's invoice first",monthDebt:"Jul"},
+  {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"900",desc:"PMT AWS SERVICE CHARGES - 05.26",invDate:"11-Jun-26",dueDate:"10-Jul-26",amount:3942.93,paid:0.0,pending:3942.93,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 12",priority:"🔴 Urgent",note:"",monthDebt:"Jul"},
+  {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202606-2355",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 06.26",invDate:"12-Jun-26",dueDate:"19-Jun-26",amount:170.04,paid:0.0,pending:170.04,statusPmt:"Pending",pmtDate:"—",status:"Overdue",overDue:"- 33",priority:"🔴 Urgent",note:"05-Jul: paid for July's invoice first",monthDebt:"Jul"},
   {supplier:"Sprinto Inc.",bank:"First Citizens Bank and Trust Co. (formerly Silicon Valley Bank)",bankAcc:"3304464694",swift:"SVBKUS6S",inv:"I-US23644",desc:"PMT (4th) SAAS SUBSCRIPTION FEE FOR SOC 2 COMPLIANCE PLATFORM (INCLUDING ISO 27001 & GDPR) (19JUN-18SEP)",invDate:"19-Jun-26",dueDate:"26-Jun-26",amount:2250.0,paid:2250.0,pending:0.0,statusPmt:"Paid",pmtDate:"13-Jul-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Jul"},
-  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"95",desc:"PMT ADVISORY SERVICES - 06.26 (Inv: 95)",invDate:"30-Jun-26",dueDate:"25-Jul-26",amount:11125.0,paid:0.0,pending:11125.0,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"4",priority:"🟠 Planned",note:"",monthDebt:"Aug"},
-  {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"954",desc:"PMT AWS SERVICE CHARGES - 06.26",invDate:"17-Jul-26",dueDate:"15-Aug-26",amount:3401.33,paid:0.0,pending:3401.33,statusPmt:"Pending",pmtDate:"—",status:"Pending",overDue:"25",priority:"🟢 Consider",note:"Not issued invoice",monthDebt:"Aug"},
+  {supplier:"Keytechx Pte. Ltd",bank:"DBS Bank Ltd.",bankAcc:"8853798635",swift:"DBSSSGSG",inv:"95",desc:"PMT ADVISORY SERVICES - 06.26 (Inv: 95)",invDate:"30-Jun-26",dueDate:"25-Jul-26",amount:11125.0,paid:0.0,pending:11125.0,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"3",priority:"🟠 Planned",note:"",monthDebt:"Aug"},
+  {supplier:"Renova Cloud Hk Limited",bank:"OCBC Singapore",bankAcc:"503380354301",swift:"OCBCSGSG",inv:"954",desc:"PMT AWS SERVICE CHARGES - 06.26",invDate:"17-Jul-26",dueDate:"15-Aug-26",amount:3401.33,paid:0.0,pending:3401.33,statusPmt:"Pending",pmtDate:"—",status:"Pending",overDue:"24",priority:"🟢 Consider",note:"Not issued invoice",monthDebt:"Aug"},
   {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of Vietnam Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"835-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN JUN",invDate:"05-Jul-26",dueDate:"15-Jul-26",amount:348.02,paid:348.02,pending:0.0,statusPmt:"Paid",pmtDate:"21-Jul-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Jul"},
   {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263301",desc:"PMT FOR ACCOUNTANCY, CONSOLIDATED FS FOR YE2025",invDate:"03-Jul-26",dueDate:"31-Jul-26",amount:3892.86,paid:0.0,pending:1946.43,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"10",priority:"🟠 Planned",note:"Amount of Inv: 4,905 SGD, 2 installments (pmt 1st in Jul: 2,452.5 SGD, pmt 2nd in Aug: 2,452.5 SGD)",monthDebt:"Jul"},
   {supplier:"People Intelligence Singapore Pte. Ltd",bank:"DBS Bank Ltd",bankAcc:"8853798181",swift:"DBSSSGSG",inv:"202607-2530",desc:"PMT EMLOYEE MANAGEMENT SYSTEM - 07.26",invDate:"01-Jul-26",dueDate:"07-Jul-26",amount:164.37,paid:164.37,pending:0.0,statusPmt:"Paid",pmtDate:"05-Jul-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"PMT by Wise",monthDebt:"Jun"},
-  {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263530",desc:"PMT FOR PREPARE AGM, FILE ANNUAL RETURN YE2025",invDate:"17-Jul-26",dueDate:"31-Jul-26",amount:428.25,paid:0.0,pending:428.25,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"10",priority:"🟠 Planned",note:"Amount of Inv: 539.6 SGD",monthDebt:"Aug"}
+  {supplier:"Acclime Singapore Pte Ltd",bank:"DBS BANK LTD",bankAcc:"0659015824 (a/c SGD)",swift:"DBSSSGSG",inv:"20263530",desc:"PMT FOR PREPARE AGM, FILE ANNUAL RETURN YE2025",invDate:"17-Jul-26",dueDate:"31-Jul-26",amount:428.25,paid:0.0,pending:428.25,statusPmt:"Pending",pmtDate:"—",status:"Due soon",overDue:"9",priority:"🟠 Planned",note:"Amount of Inv: 539.6 SGD",monthDebt:"Aug"},
+  {supplier:"Cloud Ace Co., Ltd.",bank:"Agribank of Vietnam Branch 3",bankAcc:"1602201366493",swift:"VBAAVNVX824",inv:"8-26CA",desc:"PMT GOOGLE CLOUD SERVER/HOSTING PARTNER IN JUN",invDate:"05-Jul-26",dueDate:"15-Jul-26",amount:348.02,paid:348.02,pending:0.0,statusPmt:"Paid",pmtDate:"21-Jul-26",status:"Paid",overDue:"-",priority:"✅ Done",note:"",monthDebt:"Jul"}
 ];
 // ===== LOAD DATA FROM GOOGLE SHEETS =====
 function loadData(){
   var btn=document.getElementById('refreshBtn');
-  if(btn){btn.textContent='\u23F3 Loading...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ Loading...';btn.disabled=true;}
   var badge=document.getElementById('autoBadge');
-  if(badge) badge.classList.add('syncing');
-
-  var pubUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
-  var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(pubUrl);
-
+  if(badge)badge.classList.add('syncing');
+  var ts=new Date().getTime();
+  var _urls=[
+    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv&t='+ts,
+    'https://docs.google.com/spreadsheets/d/1fGEVwnBEPaIYYGY6NXnUT3pXGvnswpdWf4RUWXkO0wM/pub?gid=807268203&single=true&output=csv&t='+ts,
+    'https://api.allorigins.win/raw?url='+encodeURIComponent('https://docs.google.com/spreadsheets/d/1fGEVwnBEPaIYYGY6NXnUT3pXGvnswpdWf4RUWXkO0wM/export?format=csv&gid=807268203'),
+    'https://corsproxy.io/?'+encodeURIComponent('https://docs.google.com/spreadsheets/d/1fGEVwnBEPaIYYGY6NXnUT3pXGvnswpdWf4RUWXkO0wM/export?format=csv&gid=807268203&t='+ts)
+  ];
   function onOK(data){
     allData=data;
     var now=new Date();
-    var ts=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
-           String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-    var ls=document.getElementById('lastSync');if(ls)ls.textContent=ts;
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=ts;
-    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    var ts2=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
+            String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent=ts2;
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=ts2;
+    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
+    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
   }
-
-  function onFail(){
+  function useFallback(reason){
+    console.warn('Static:',reason);
     allData=STATIC_DATA;
-    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static \u00B7 Jul-2026';
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static \u00B7 Jul-2026';
-    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
+    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();
-    initConfirmation();
-    applyDetailFilters();
-    applyMonthlyFilter();
+    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
   }
-
-  function tryPub(){
-    fetch(pubUrl)
-      .then(function(r){return r.text();})
+  var _done=false;
+  var _ctrl=_urls.map(function(){return new AbortController();});
+  var _mt=setTimeout(function(){
+    if(!_done){_done=true;_ctrl.forEach(function(c){c.abort();});useFallback('Timeout');}
+  },12000);
+  _urls.forEach(function(url,i){
+    fetch(url,{signal:_ctrl[i].signal})
+      .then(function(r){if(!r.ok)throw new Error(r.status);return r.text();})
       .then(function(txt){
-        var d=parseSheetData(txt);
-        if(d&&d.length>5){onOK(d);}else{tryProxy();}
+        if(_done)return;
+        if(!txt||txt.length<50||txt.trim()[0]==='<')throw new Error('Not CSV');
+        var parsed=parseSheetData(txt);
+        if(!parsed||parsed.length<3)throw new Error('No records');
+        _done=true;
+        clearTimeout(_mt);
+        _ctrl.forEach(function(c,j){if(j!==i)try{c.abort();}catch(e){}});
+        onOK(parsed);
       })
-      .catch(function(){tryProxy();});
-  }
-
-  function tryProxy(){
-    fetch(proxyUrl)
-      .then(function(r){return r.text();})
-      .then(function(txt){
-        var d=parseSheetData(txt);
-        if(d&&d.length>5){onOK(d);}else{onFail();}
-      })
-      .catch(function(){onFail();});
-  }
-
-  tryPub();
+      .catch(function(){});
+  });
 }
+
 
 function parseSheetData(csvText){
   var rows=parseCSV(csvText);
@@ -845,6 +862,59 @@ function renderCurrentPage(){
   else if(currentPage==='detail') applyDetailFilters();
   else if(currentPage==='confirmation') initConfirmation();
 }
+
+
+// ===== MULTI-SELECT ENGINE =====
+var _S={},_O={},_C={},_W={};
+function _msR(id){
+  var w=document.getElementById(_W[id]);if(!w)return;
+  var sel=_S[id]||new Set(),n=sel.size,o=_O[id]||[];
+  var lbl=w.getAttribute('data-label')||id;
+  var txt=n===0?lbl:(n===1?Array.from(sel)[0]:lbl);
+  var cnt=n>0?' <span class="ms-cnt">'+n+'</span>':'';
+  var cls='ms-btn'+(n>0?' msa':'');
+  var q="'"; // single quote for onclick attrs
+  var items=o.map(function(x){
+    var v=typeof x==='string'?x:x.v,t=typeof x==='string'?x:x.t,c=sel.has(v);
+    var dv=v.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    return '<div class="ms-item'+(c?' mss':'')+'" data-v="'+dv+'" onclick="_msT('+q+id+q+',this)">'+
+      '<input type="checkbox"'+(c?' checked':'')+' onclick="event.stopPropagation()"><span>'+t+'</span></div>';
+  }).join('');
+  w.innerHTML=
+    '<div class="'+cls+'" onclick="_msO('+q+id+q+')">'+txt+cnt+'<span class="ms-caret">&#9660;</span></div>'+
+    '<div class="ms-panel" id="msp-'+id+'">'+
+    '<input class="ms-psrch" placeholder="Search..." oninput="_msSr('+q+id+q+',this.value)">'+
+    '<div class="ms-list" id="msl-'+id+'">'+items+'</div>'+
+    '<div class="ms-foot">'+
+    '<button class="ms-clr" onclick="_msC('+q+id+q+')">Clear</button>'+
+    '<button class="ms-all" onclick="_msA('+q+id+q+')">All</button>'+
+    '</div></div>';
+}
+function msCreate(wid,id,o,cb){_S[id]=_S[id]||new Set();_O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);}
+function msUpdate(wid,id,o,cb){
+  if(!_S[id])_S[id]=new Set();
+  var v=o.map(function(x){return typeof x==='string'?x:x.v;});
+  _S[id].forEach(function(s){if(v.indexOf(s)<0)_S[id].delete(s);});
+  _O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);
+}
+function _msO(id){
+  var p=document.getElementById('msp-'+id);if(!p)return;
+  var was=p.classList.contains('open');
+  document.querySelectorAll('.ms-panel.open').forEach(function(x){x.classList.remove('open');});
+  if(!was){p.classList.add('open');var s=p.querySelector('.ms-psrch');if(s){s.value='';s.focus();_msSr(id,'');}}
+}
+function _msT(id,el){
+  var v=el.getAttribute('data-v');if(!_S[id])_S[id]=new Set();
+  if(_S[id].has(v))_S[id].delete(v);else _S[id].add(v);
+  _msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');
+  if(_C[id])_C[id]();
+}
+function _msC(id){_S[id]=new Set();_msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');if(_C[id])_C[id]();}
+function _msA(id){_S[id]=new Set((_O[id]||[]).map(function(x){return typeof x==='string'?x:x.v;}));_msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');if(_C[id])_C[id]();}
+function _msSr(id,q){q=q.toLowerCase();document.querySelectorAll('#msl-'+id+' .ms-item').forEach(function(e){e.style.display=e.textContent.toLowerCase().indexOf(q)>=0?'':'none';});}
+function msMatch(id,val){if(!_S[id]||_S[id].size===0)return true;return _S[id].has(val);}
+function msMatchLow(id,val){if(!_S[id]||_S[id].size===0)return true;var v=(val||'').toLowerCase();var f=false;_S[id].forEach(function(s){if(s.toLowerCase()===v)f=true;});return f;}
+document.addEventListener('click',function(e){if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(function(p){p.classList.remove('open');});});
 
 // ===== OVERVIEW =====
 var priorityDonutInst=null,trendChartInst=null;
@@ -1283,60 +1353,35 @@ function filterStatus(status,btn){
 }
 function filterDetailTable(q){applyDetailFilters();}
 function applyDetailFilters(){
-  var ddSup=document.getElementById('detail-supplier');
-  var ddPmt=document.getElementById('detail-pmtdate');
-
-  // Populate Supplier dropdown
-  if(ddSup){
-    var sups=[];
-    allData.forEach(function(d){if(sups.indexOf(d.supplier)<0) sups.push(d.supplier);});
-    sups.sort();
-    var prevS=ddSup.value;
-    ddSup.innerHTML='<option value="">All Suppliers</option>'+sups.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
-    if(prevS) ddSup.value=prevS;
+  var src=allData.length>0?allData:STATIC_DATA;
+  function toMY(s){
+    if(!s||s==='—')return null;
+    s=s.trim();
+    var x=s.split('-');
+    if(x.length===2&&x[1].length===4)return s; // already "Jun-2026"
+    if(x.length===3){var y=parseInt(x[2]);if(y<100)y+=2000;return x[1]+'-'+y;} // "03-Jun-26"
+    return null;
   }
-
-  // Populate PMT Date dropdown từ cột T — nhóm theo "Mon-YYYY"
-  if(ddPmt){
-    var pmtMonths=[];
-    allData.forEach(function(d){
-      if(!d.pmtDate||d.pmtDate==='—') return;
-      // pmtDate đã chuẩn hóa dạng "Mar-2026"
-      if(pmtMonths.indexOf(d.pmtDate)<0) pmtMonths.push(d.pmtDate);
-    });
-    // Sắp xếp theo thứ tự thời gian
-    pmtMonths.sort(function(a,b){
-      var parse=function(s){
-        var p=s.split('-');
-        var yr=parseInt(p[1]||'0');if(yr<100)yr+=2000;
-        var mi=monthAbbr.indexOf(p[0]);
-        return yr*12+(mi>=0?mi:0);
-      };
-      return parse(a)-parse(b);
-    });
-    var prevP=ddPmt.value;
-    ddPmt.innerHTML='<option value="">All PMT Date</option>'+pmtMonths.map(function(m){
-      return '<option value="'+m+'">'+m+'</option>';
-    }).join('');
-    if(prevP) ddPmt.value=prevP;
-  }
-
-  var supplier=ddSup?ddSup.value:'';
-  var pmtMonth=ddPmt?ddPmt.value:'';
-  var priority=document.getElementById('detail-priority')?document.getElementById('detail-priority').value:'';
-  var status=document.getElementById('detail-status')?document.getElementById('detail-status').value:'';
-
-  var data=allData.filter(function(d){
-    if(supplier&&d.supplier!==supplier) return false;
-    // Filter theo PMT date — so sánh trực tiếp "Mar-2026"
-    if(pmtMonth&&d.pmtDate!==pmtMonth) return false;
-    if(priority&&d.priority!==priority) return false;
-    if(status&&d.status!==status) return false;
+  var pmts=[];
+  src.forEach(function(d){var my=toMY(d.pmtDate);if(my&&pmts.indexOf(my)<0)pmts.push(my);});
+  pmts.sort(function(a,b){
+    var p=function(s){var x=s.split('-');var y=parseInt(x[1]||0);var mi=monthAbbr.indexOf(x[0]);return y*12+(mi>=0?mi:0);};
+    return p(a)-p(b);
+  });
+  msUpdate('mw-dp','det-pmt',pmts,applyDetailFilters);
+  var sups=[];
+  src.forEach(function(d){if(d.supplier&&sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
+  sups.sort();
+  msUpdate('mw-ds','det-sup',sups,applyDetailFilters);
+  var data=src.filter(function(d){
+    if(!msMatch('det-sup',d.supplier))return false;
+    if(_S['det-pmt']&&_S['det-pmt'].size>0){var my=toMY(d.pmtDate);if(!my||!_S['det-pmt'].has(my))return false;}
+    if(!msMatch('det-pri',d.priority))return false;
+    if(!msMatchLow('det-sta',d.status))return false;
     return true;
   });
   renderDetailTable(data);
 }
-
 function initConfirmation(){
   var sel=document.getElementById('confNoSelect');if(!sel)return;
   var src=allData.length>0?allData:STATIC_DATA;
