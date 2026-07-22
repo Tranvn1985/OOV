@@ -246,36 +246,6 @@ tbody td.center{text-align:center}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:#c5ccff;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-
-/* ===== MULTI-SELECT CSS ===== */
-.ms-wrap{position:relative;display:inline-block;vertical-align:middle;margin-right:6px}
-.ms-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:6px;
-  border:1.5px solid var(--border);background:var(--surface2);color:var(--text);
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;
-  min-width:120px;transition:border-color .15s;white-space:nowrap;user-select:none}
-.ms-btn:hover,.ms-btn.msa{border-color:var(--accent);background:#eff2ff;color:var(--accent)}
-.ms-caret{font-size:8px;margin-left:auto;opacity:.4}
-.ms-cnt{background:var(--accent);color:#fff;border-radius:9px;font-size:10px;font-weight:700;
-  padding:0 5px;min-width:16px;text-align:center;display:inline-block}
-.ms-panel{position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:200px;max-width:280px;
-  background:var(--surface);border:1.5px solid var(--border);border-radius:6px;
-  box-shadow:0 8px 24px rgba(0,0,0,.14);display:none;overflow:hidden}
-.ms-panel.open{display:block}
-.ms-psrch{width:100%;box-sizing:border-box;padding:7px 10px;border:none;
-  border-bottom:1px solid var(--border);font-family:'Inter',sans-serif;font-size:12px;outline:none;
-  background:var(--surface2)}
-.ms-list{max-height:200px;overflow-y:auto}
-.ms-item{display:flex;align-items:center;gap:7px;padding:7px 11px;cursor:pointer;font-size:12px}
-.ms-item:hover{background:#f5f5ff}
-.ms-item.mss{background:#eff2ff;font-weight:600;color:var(--accent)}
-.ms-item input[type=checkbox]{accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.ms-foot{display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--border);background:var(--surface2)}
-.ms-foot button{flex:1;padding:4px 0;border-radius:6px;font-family:'Inter',sans-serif;
-  font-size:11px;font-weight:600;cursor:pointer}
-.ms-clr{background:var(--surface);color:var(--muted);border:1px solid var(--border)}
-.ms-clr:hover{color:#c0392b;border-color:#c0392b}
-.ms-all{background:var(--accent);color:#fff;border:1px solid var(--accent)}
-
 </style>
 </head>
 <body>
@@ -455,10 +425,20 @@ tbody td.center{text-align:center}
     </div>
   </div>
   <div class="filter-bar">
-    <div class="ms-wrap" id="mw-dp" data-label="All PMT Date"></div>
-    <div class="ms-wrap" id="mw-ds" data-label="All Suppliers"></div>
-    <div class="ms-wrap" id="mw-dpr" data-label="All Priority"></div>
-    <div class="ms-wrap" id="mw-dst" data-label="All Status"></div>
+    <select class="filter-select" id="detail-pmtdate" onchange="applyDetailFilters()">
+      <option value="">All PMT Date</option>
+    </select>
+    <select class="filter-select" id="detail-supplier" onchange="applyDetailFilters()">
+      <option value="">All Suppliers</option>
+    </select>
+    <select class="filter-select" id="detail-priority" onchange="applyDetailFilters()">
+      <option value="">All Priority</option>
+      <option>🔴 Urgent</option><option>🟠 Planned</option><option>🟢 Consider</option><option>⚫ Blocked</option><option>✅ Done</option>
+    </select>
+    <select class="filter-select" id="detail-status" onchange="applyDetailFilters()">
+      <option value="">All Status</option>
+      <option>Overdue</option><option>Due Soon</option><option>Pending</option><option>Paid</option><option>Blocked</option>
+    </select>
     <button class="filter-refresh-btn" onclick="loadData()">&#8634; Refresh</button>
   </div>
   <div class="table-card">
@@ -684,79 +664,62 @@ var STATIC_DATA = [
 // ===== LOAD DATA FROM GOOGLE SHEETS =====
 function loadData(){
   var btn=document.getElementById('refreshBtn');
-  if(btn){btn.textContent='⏳ Loading...';btn.disabled=true;}
+  if(btn){btn.textContent='\u23F3 Loading...';btn.disabled=true;}
   var badge=document.getElementById('autoBadge');
-  if(badge)badge.classList.add('syncing');
+  if(badge) badge.classList.add('syncing');
 
-  var PUB='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
-  var PROXY='https://api.allorigins.win/raw?url='+encodeURIComponent(PUB);
+  var pubUrl='https://docs.google.com/spreadsheets/d/e/2PACX-1vQANh7XJk3YYucvn7deU5uoT1PtNWt3Ed-bZnkctMMmrvxrJQZOm-4bNmuFK7k46F-_jCwOM8ZNU9pc/pub?gid=807268203&single=true&output=csv';
+  var proxyUrl='https://api.allorigins.win/raw?url='+encodeURIComponent(pubUrl);
 
-  // Strict CSV validation - reject anything that looks like HTML or JS
-  function isCSV(txt){
-    if(!txt||txt.length<100)return false;
-    var s=txt.trim();
-    // Reject if starts with HTML tags
-    if(s[0]==='<')return false;
-    // Reject if contains typical HTML/JS patterns
-    var bad=['<!doctype','<html','<head','window.location','function(){','function ()','var e=','{type:'];
-    var low=s.substring(0,200).toLowerCase();
-    for(var i=0;i<bad.length;i++){if(low.indexOf(bad[i])>=0)return false;}
-    // Must have commas (CSV structure)
-    var first=s.split('\n')[0]||'';
-    return first.split(',').length>=3;
-  }
-
-  function onOK(txt){
-    var parsed=parseSheetData(txt);
-    if(!parsed||parsed.length<5){useFallback('No valid records parsed');return;}
-    allData=parsed;
+  function onOK(data){
+    allData=data;
     var now=new Date();
     var ts=now.getDate()+'-'+monthAbbr[now.getMonth()]+'-'+now.getFullYear()+' '+
            String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
     var ls=document.getElementById('lastSync');if(ls)ls.textContent=ts;
     var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent=ts;
-    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
+    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
+    renderCurrentPage();
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
 
-  function useFallback(reason){
-    console.log('Using static data:',reason);
+  function onFail(){
     allData=STATIC_DATA;
-    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static · Jul-2026';
-    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static · Jul-2026';
-    if(btn){btn.textContent='↺ Refresh data';btn.disabled=false;}
+    var ls=document.getElementById('lastSync');if(ls)ls.textContent='Static \u00B7 Jul-2026';
+    var lb=document.getElementById('liveSyncBadge');if(lb)lb.textContent='Static \u00B7 Jul-2026';
+    if(btn){btn.textContent='\u21BA Refresh data';btn.disabled=false;}
     if(badge)badge.classList.remove('syncing');
-    renderCurrentPage();initConfirmation();applyDetailFilters();applyMonthlyFilter();
+    renderCurrentPage();
+    initConfirmation();
+    applyDetailFilters();
+    applyMonthlyFilter();
   }
 
-  // Try pub URL first (2s timeout), then proxy (4s timeout), then static
-  var t1=setTimeout(function(){tryProxy();},2000);
-  var done=false;
-
-  fetch(PUB)
-    .then(function(r){return r.text();})
-    .then(function(txt){
-      if(done)return;
-      if(isCSV(txt)){done=true;clearTimeout(t1);onOK(txt);}
-      // If not valid CSV, let timeout trigger proxy
-    })
-    .catch(function(){/* let timeout handle */});
-
-  function tryProxy(){
-    if(done)return;
-    var t2=setTimeout(function(){if(!done){done=true;useFallback('Timeout');}},5000);
-    fetch(PROXY)
+  function tryPub(){
+    fetch(pubUrl)
       .then(function(r){return r.text();})
       .then(function(txt){
-        if(done)return;
-        done=true;clearTimeout(t2);
-        if(isCSV(txt))onOK(txt);else useFallback('Proxy returned non-CSV');
+        var d=parseSheetData(txt);
+        if(d&&d.length>5){onOK(d);}else{tryProxy();}
       })
-      .catch(function(){if(!done){done=true;clearTimeout(t2);useFallback('Proxy error');}});
+      .catch(function(){tryProxy();});
   }
-}
 
+  function tryProxy(){
+    fetch(proxyUrl)
+      .then(function(r){return r.text();})
+      .then(function(txt){
+        var d=parseSheetData(txt);
+        if(d&&d.length>5){onOK(d);}else{onFail();}
+      })
+      .catch(function(){onFail();});
+  }
+
+  tryPub();
+}
 
 function parseSheetData(csvText){
   var rows=parseCSV(csvText);
@@ -882,59 +845,6 @@ function renderCurrentPage(){
   else if(currentPage==='detail') applyDetailFilters();
   else if(currentPage==='confirmation') initConfirmation();
 }
-
-
-// ===== MULTI-SELECT ENGINE =====
-var _S={},_O={},_C={},_W={};
-function _msR(id){
-  var w=document.getElementById(_W[id]);if(!w)return;
-  var sel=_S[id]||new Set(),n=sel.size,o=_O[id]||[];
-  var lbl=w.getAttribute('data-label')||id;
-  var txt=n===0?lbl:(n===1?Array.from(sel)[0]:lbl);
-  var cnt=n>0?' <span class="ms-cnt">'+n+'</span>':'';
-  var cls='ms-btn'+(n>0?' msa':'');
-  var q="'"; // single quote for onclick attrs
-  var items=o.map(function(x){
-    var v=typeof x==='string'?x:x.v,t=typeof x==='string'?x:x.t,c=sel.has(v);
-    var dv=v.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-    return '<div class="ms-item'+(c?' mss':'')+'" data-v="'+dv+'" onclick="_msT('+q+id+q+',this)">'+
-      '<input type="checkbox"'+(c?' checked':'')+' onclick="event.stopPropagation()"><span>'+t+'</span></div>';
-  }).join('');
-  w.innerHTML=
-    '<div class="'+cls+'" onclick="_msO('+q+id+q+')">'+txt+cnt+'<span class="ms-caret">&#9660;</span></div>'+
-    '<div class="ms-panel" id="msp-'+id+'">'+
-    '<input class="ms-psrch" placeholder="Search..." oninput="_msSr('+q+id+q+',this.value)">'+
-    '<div class="ms-list" id="msl-'+id+'">'+items+'</div>'+
-    '<div class="ms-foot">'+
-    '<button class="ms-clr" onclick="_msC('+q+id+q+')">Clear</button>'+
-    '<button class="ms-all" onclick="_msA('+q+id+q+')">All</button>'+
-    '</div></div>';
-}
-function msCreate(wid,id,o,cb){_S[id]=_S[id]||new Set();_O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);}
-function msUpdate(wid,id,o,cb){
-  if(!_S[id])_S[id]=new Set();
-  var v=o.map(function(x){return typeof x==='string'?x:x.v;});
-  _S[id].forEach(function(s){if(v.indexOf(s)<0)_S[id].delete(s);});
-  _O[id]=o;_C[id]=cb;_W[id]=wid;_msR(id);
-}
-function _msO(id){
-  var p=document.getElementById('msp-'+id);if(!p)return;
-  var was=p.classList.contains('open');
-  document.querySelectorAll('.ms-panel.open').forEach(function(x){x.classList.remove('open');});
-  if(!was){p.classList.add('open');var s=p.querySelector('.ms-psrch');if(s){s.value='';s.focus();_msSr(id,'');}}
-}
-function _msT(id,el){
-  var v=el.getAttribute('data-v');if(!_S[id])_S[id]=new Set();
-  if(_S[id].has(v))_S[id].delete(v);else _S[id].add(v);
-  _msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');
-  if(_C[id])_C[id]();
-}
-function _msC(id){_S[id]=new Set();_msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');if(_C[id])_C[id]();}
-function _msA(id){_S[id]=new Set((_O[id]||[]).map(function(x){return typeof x==='string'?x:x.v;}));_msR(id);var p=document.getElementById('msp-'+id);if(p)p.classList.add('open');if(_C[id])_C[id]();}
-function _msSr(id,q){q=q.toLowerCase();document.querySelectorAll('#msl-'+id+' .ms-item').forEach(function(e){e.style.display=e.textContent.toLowerCase().indexOf(q)>=0?'':'none';});}
-function msMatch(id,val){if(!_S[id]||_S[id].size===0)return true;return _S[id].has(val);}
-function msMatchLow(id,val){if(!_S[id]||_S[id].size===0)return true;var v=(val||'').toLowerCase();var f=false;_S[id].forEach(function(s){if(s.toLowerCase()===v)f=true;});return f;}
-document.addEventListener('click',function(e){if(!e.target.closest('.ms-wrap'))document.querySelectorAll('.ms-panel.open').forEach(function(p){p.classList.remove('open');});});
 
 // ===== OVERVIEW =====
 var priorityDonutInst=null,trendChartInst=null;
@@ -1373,35 +1283,60 @@ function filterStatus(status,btn){
 }
 function filterDetailTable(q){applyDetailFilters();}
 function applyDetailFilters(){
-  var src=allData.length>0?allData:STATIC_DATA;
-  function toMY(s){
-    if(!s||s==='—')return null;
-    s=s.trim();
-    var x=s.split('-');
-    if(x.length===2&&x[1].length===4)return s; // already "Jun-2026"
-    if(x.length===3){var y=parseInt(x[2]);if(y<100)y+=2000;return x[1]+'-'+y;} // "03-Jun-26"
-    return null;
+  var ddSup=document.getElementById('detail-supplier');
+  var ddPmt=document.getElementById('detail-pmtdate');
+
+  // Populate Supplier dropdown
+  if(ddSup){
+    var sups=[];
+    allData.forEach(function(d){if(sups.indexOf(d.supplier)<0) sups.push(d.supplier);});
+    sups.sort();
+    var prevS=ddSup.value;
+    ddSup.innerHTML='<option value="">All Suppliers</option>'+sups.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+    if(prevS) ddSup.value=prevS;
   }
-  var pmts=[];
-  src.forEach(function(d){var my=toMY(d.pmtDate);if(my&&pmts.indexOf(my)<0)pmts.push(my);});
-  pmts.sort(function(a,b){
-    var p=function(s){var x=s.split('-');var y=parseInt(x[1]||0);var mi=monthAbbr.indexOf(x[0]);return y*12+(mi>=0?mi:0);};
-    return p(a)-p(b);
-  });
-  msUpdate('mw-dp','det-pmt',pmts,applyDetailFilters);
-  var sups=[];
-  src.forEach(function(d){if(d.supplier&&sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
-  sups.sort();
-  msUpdate('mw-ds','det-sup',sups,applyDetailFilters);
-  var data=src.filter(function(d){
-    if(!msMatch('det-sup',d.supplier))return false;
-    if(_S['det-pmt']&&_S['det-pmt'].size>0){var my=toMY(d.pmtDate);if(!my||!_S['det-pmt'].has(my))return false;}
-    if(!msMatch('det-pri',d.priority))return false;
-    if(!msMatchLow('det-sta',d.status))return false;
+
+  // Populate PMT Date dropdown từ cột T — nhóm theo "Mon-YYYY"
+  if(ddPmt){
+    var pmtMonths=[];
+    allData.forEach(function(d){
+      if(!d.pmtDate||d.pmtDate==='—') return;
+      // pmtDate đã chuẩn hóa dạng "Mar-2026"
+      if(pmtMonths.indexOf(d.pmtDate)<0) pmtMonths.push(d.pmtDate);
+    });
+    // Sắp xếp theo thứ tự thời gian
+    pmtMonths.sort(function(a,b){
+      var parse=function(s){
+        var p=s.split('-');
+        var yr=parseInt(p[1]||'0');if(yr<100)yr+=2000;
+        var mi=monthAbbr.indexOf(p[0]);
+        return yr*12+(mi>=0?mi:0);
+      };
+      return parse(a)-parse(b);
+    });
+    var prevP=ddPmt.value;
+    ddPmt.innerHTML='<option value="">All PMT Date</option>'+pmtMonths.map(function(m){
+      return '<option value="'+m+'">'+m+'</option>';
+    }).join('');
+    if(prevP) ddPmt.value=prevP;
+  }
+
+  var supplier=ddSup?ddSup.value:'';
+  var pmtMonth=ddPmt?ddPmt.value:'';
+  var priority=document.getElementById('detail-priority')?document.getElementById('detail-priority').value:'';
+  var status=document.getElementById('detail-status')?document.getElementById('detail-status').value:'';
+
+  var data=allData.filter(function(d){
+    if(supplier&&d.supplier!==supplier) return false;
+    // Filter theo PMT date — so sánh trực tiếp "Mar-2026"
+    if(pmtMonth&&d.pmtDate!==pmtMonth) return false;
+    if(priority&&d.priority!==priority) return false;
+    if(status&&d.status!==status) return false;
     return true;
   });
   renderDetailTable(data);
 }
+
 function initConfirmation(){
   var sel=document.getElementById('confNoSelect');if(!sel)return;
   var src=allData.length>0?allData:STATIC_DATA;
