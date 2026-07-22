@@ -425,20 +425,10 @@ tbody td.center{text-align:center}
     </div>
   </div>
   <div class="filter-bar">
-    <select class="filter-select" id="detail-pmtdate" onchange="applyDetailFilters()">
-      <option value="">All PMT Date</option>
-    </select>
-    <select class="filter-select" id="detail-supplier" onchange="applyDetailFilters()">
-      <option value="">All Suppliers</option>
-    </select>
-    <select class="filter-select" id="detail-priority" onchange="applyDetailFilters()">
-      <option value="">All Priority</option>
-      <option>🔴 Urgent</option><option>🟠 Planned</option><option>🟢 Consider</option><option>⚫ Blocked</option><option>✅ Done</option>
-    </select>
-    <select class="filter-select" id="detail-status" onchange="applyDetailFilters()">
-      <option value="">All Status</option>
-      <option>Overdue</option><option>Due Soon</option><option>Pending</option><option>Paid</option><option>Blocked</option>
-    </select>
+    <div class="ms-wrap" id="mw-dp" data-label="All PMT Date"></div>
+    <div class="ms-wrap" id="mw-ds" data-label="All Suppliers"></div>
+    <div class="ms-wrap" id="mw-dpr" data-label="All Priority"></div>
+    <div class="ms-wrap" id="mw-dst" data-label="All Status"></div>
     <button class="filter-refresh-btn" onclick="loadData()">&#8634; Refresh</button>
   </div>
   <div class="table-card">
@@ -1283,55 +1273,32 @@ function filterStatus(status,btn){
 }
 function filterDetailTable(q){applyDetailFilters();}
 function applyDetailFilters(){
-  var ddSup=document.getElementById('detail-supplier');
-  var ddPmt=document.getElementById('detail-pmtdate');
+  // Populate PMT Date options
+  var pmts=[];
+  allData.forEach(function(d){
+    if(!d.pmtDate||d.pmtDate==='—')return;
+    if(pmts.indexOf(d.pmtDate)<0)pmts.push(d.pmtDate);
+  });
+  pmts.sort(function(a,b){
+    var p=function(s){var x=s.split('-');var y=parseInt(x[1]||0);if(y<100)y+=2000;var m=monthAbbr.indexOf(x[0]);return y*12+(m>=0?m:0);};
+    return p(a)-p(b);
+  });
+  if(typeof msUpdate==='function') msUpdate('mw-dp','det-pmt',pmts,applyDetailFilters);
 
-  // Populate Supplier dropdown
-  if(ddSup){
-    var sups=[];
-    allData.forEach(function(d){if(sups.indexOf(d.supplier)<0) sups.push(d.supplier);});
-    sups.sort();
-    var prevS=ddSup.value;
-    ddSup.innerHTML='<option value="">All Suppliers</option>'+sups.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
-    if(prevS) ddSup.value=prevS;
-  }
+  // Populate Supplier options
+  var sups=[];
+  allData.forEach(function(d){if(sups.indexOf(d.supplier)<0)sups.push(d.supplier);});
+  sups.sort();
+  if(typeof msUpdate==='function') msUpdate('mw-ds','det-sup',sups,applyDetailFilters);
 
-  // Populate PMT Date dropdown từ cột T — nhóm theo "Mon-YYYY"
-  if(ddPmt){
-    var pmtMonths=[];
-    allData.forEach(function(d){
-      if(!d.pmtDate||d.pmtDate==='—') return;
-      // pmtDate đã chuẩn hóa dạng "Mar-2026"
-      if(pmtMonths.indexOf(d.pmtDate)<0) pmtMonths.push(d.pmtDate);
-    });
-    // Sắp xếp theo thứ tự thời gian
-    pmtMonths.sort(function(a,b){
-      var parse=function(s){
-        var p=s.split('-');
-        var yr=parseInt(p[1]||'0');if(yr<100)yr+=2000;
-        var mi=monthAbbr.indexOf(p[0]);
-        return yr*12+(mi>=0?mi:0);
-      };
-      return parse(a)-parse(b);
-    });
-    var prevP=ddPmt.value;
-    ddPmt.innerHTML='<option value="">All PMT Date</option>'+pmtMonths.map(function(m){
-      return '<option value="'+m+'">'+m+'</option>';
-    }).join('');
-    if(prevP) ddPmt.value=prevP;
-  }
-
-  var supplier=ddSup?ddSup.value:'';
-  var pmtMonth=ddPmt?ddPmt.value:'';
-  var priority=document.getElementById('detail-priority')?document.getElementById('detail-priority').value:'';
-  var status=document.getElementById('detail-status')?document.getElementById('detail-status').value:'';
-
+  // Filter data using MS selections
   var data=allData.filter(function(d){
-    if(supplier&&d.supplier!==supplier) return false;
-    // Filter theo PMT date — so sánh trực tiếp "Mar-2026"
-    if(pmtMonth&&d.pmtDate!==pmtMonth) return false;
-    if(priority&&d.priority!==priority) return false;
-    if(status&&d.status!==status) return false;
+    if(typeof msMatch==='function'){
+      if(!msMatch('det-sup',d.supplier))return false;
+      if(!msMatch('det-pmt',d.pmtDate))return false;
+      if(!msMatch('det-pri',d.priority))return false;
+      if(!msMatchLow('det-sta',d.status))return false;
+    }
     return true;
   });
   renderDetailTable(data);
